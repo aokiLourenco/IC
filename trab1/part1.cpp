@@ -53,7 +53,7 @@ std::map<std::string, int> countWordFrequencies(const std::vector<std::string>& 
 
 int main() {
     // file stream object
-    std::ifstream file("ep-01-01-15.txt");
+    std::ifstream file("samples/ep-01-01-15.txt");
 
     // check if file opened
     if (!file.is_open()) {
@@ -88,6 +88,7 @@ int main() {
     std::cout << "3. Both" << std::endl;
     std::cout << "4. Character frequencies" << std::endl;
     std::cout << "5. Word frequencies" << std::endl;
+    std::cout << "6. Exit" << std::endl;
     std::cout << "Enter your choice: ";
     int choice;
     std::cin >> choice;
@@ -130,6 +131,10 @@ int main() {
             for (const auto& pair : wordFrequency) {
                 std::cout << pair.first << ": " << pair.second << std::endl;
             }
+            break;
+        }
+        case 6: {
+            std::cout << "Exiting..." << std::endl;
             break;
         }
         default:

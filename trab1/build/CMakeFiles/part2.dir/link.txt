@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/part2.dir/part2.cpp.o -o part2  /usr/lib/x86_64-linux-gnu/libsfml-audio.so.2.5.1 /usr/lib/x86_64-linux-gnu/libsfml-system.so.2.5.1 

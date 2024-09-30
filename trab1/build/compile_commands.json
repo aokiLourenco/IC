@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/aoki/Desktop/UA/IC/trab1/build",
+  "command": "/usr/bin/g++   -g -std=gnu++17 -o CMakeFiles/part1.dir/part1.cpp.o -c /home/aoki/Desktop/UA/IC/trab1/part1.cpp",
+  "file": "/home/aoki/Desktop/UA/IC/trab1/part1.cpp"
+},
+{
+  "directory": "/home/aoki/Desktop/UA/IC/trab1/build",
+  "command": "/usr/bin/g++   -g -std=gnu++17 -o CMakeFiles/part2.dir/part2.cpp.o -c /home/aoki/Desktop/UA/IC/trab1/part2.cpp",
+  "file": "/home/aoki/Desktop/UA/IC/trab1/part2.cpp"
+}
+]

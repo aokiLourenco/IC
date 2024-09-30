@@ -1,0 +1,4 @@
+/home/aoki/Desktop/UA/IC/trab1/build/CMakeFiles/part1.dir
+/home/aoki/Desktop/UA/IC/trab1/build/CMakeFiles/part2.dir
+/home/aoki/Desktop/UA/IC/trab1/build/CMakeFiles/edit_cache.dir
+/home/aoki/Desktop/UA/IC/trab1/build/CMakeFiles/rebuild_cache.dir
