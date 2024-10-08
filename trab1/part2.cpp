@@ -6,6 +6,21 @@
 #include <cmath>
 #include <map>
 
+std::vector<int> uniformQuantization(const std::vector<int>& samples, int numLevels) {
+    std::vector<int> quantizedSamples;
+    int minSample = *std::min_element(samples.begin(), samples.end());
+    int maxSample = *std::max_element(samples.begin(), samples.end());
+    int range = maxSample - minSample;
+    int stepSize = range / numLevels;
+
+    for (int sample : samples) {
+        int qunaitzedSamples = ((sample - minSample) /stepSize) * stepSize + minSample;
+        quantizedSamples.push_back(qunaitzedSamples);
+    }
+
+    return quantizedSamples;
+}
+
 void createHistogram(const std::vector<int>& data, const std::string& filename, int binSize) {
     std::map<int, int> histogram;
     for (int value : data) {
@@ -23,7 +38,7 @@ void createHistogram(const std::vector<int>& data, const std::string& filename, 
 int main() {
     // load an audio file
     sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile("samples/sample.wav")) {
+    if (!buffer.loadFromFile("../samples/sample.wav")) {
         std::cerr << "Error loading audio file" << std::endl;
         return -1;
     }
@@ -64,6 +79,22 @@ int main() {
     createHistogram(rightChannel, "samples/right_channel_histogram.txt", binSize);
     createHistogram(midChannel, "samples/mid_channel_histogram.txt", binSize);
     createHistogram(sideChannel, "samples/side_channel_histogram.txt", binSize);
+
+        // Quantize the audio samples
+    int numLevels = 16; // Adjust the number of levels as needed
+    std::vector<int> quantizedLeftChannel = uniformQuantization(leftChannel, numLevels);
+    std::vector<int> quantizedRightChannel = uniformQuantization(rightChannel, numLevels);
+    std::vector<int> quantizedMidChannel = uniformQuantization(midChannel, numLevels);
+    std::vector<int> quantizedSideChannel = uniformQuantization(sideChannel, numLevels);
+
+    // Save the quantized samples to a file
+    std::cout << "Creating quantized_audio_sample.txt" << std::endl;
+    std::ofstream quantizedOutFile("samples/quantized_audio_sample.txt");
+    for (std::size_t i = 0; i < quantizedLeftChannel.size(); ++i) {
+        quantizedOutFile << quantizedLeftChannel[i] << " " << quantizedRightChannel[i] << " "
+                         << quantizedMidChannel[i] << " " << quantizedSideChannel[i] << std::endl;
+    }
+    quantizedOutFile.close();
 
     return 0;
 }
