@@ -6,6 +6,7 @@
 #include <cmath>
 #include <map>
 
+// fucntion to uniform quantization T4
 std::vector<int> uniformQuantization(const std::vector<int>& samples, int numLevels) {
     std::vector<int> quantizedSamples;
     int minSample = *std::min_element(samples.begin(), samples.end());
@@ -21,6 +22,7 @@ std::vector<int> uniformQuantization(const std::vector<int>& samples, int numLev
     return quantizedSamples;
 }
 
+// create Histogram
 void createHistogram(const std::vector<int>& data, const std::string& filename, int binSize) {
     std::map<int, int> histogram;
     for (int value : data) {
@@ -33,6 +35,28 @@ void createHistogram(const std::vector<int>& data, const std::string& filename, 
         outFile << pair.first << " " << pair.second << std::endl;
     }
     outFile.close();
+}
+
+// function to calculate Mean Square Error (MSE)
+double calculateMSE(const std::vector<int>& original, const std::vector<int>& quantized) {
+    double mse = 0.0;
+    for (std::size_t i = 0; i < original.size(); ++i) {
+        double diff = original[i] - quantized[i];
+        mse += diff * diff;
+    }
+    return mse / original.size();
+}
+
+// function to calculate Signal-to-Noise Ratio (SNR)
+double calculateSNR(const std::vector<int>& original, const std::vector<int>& quantized) {
+    double signalPower = 0.0;
+    double noisePower = 0.0;
+    for (std::size_t i = 0; i < original.size(); ++i) {
+        signalPower += original[i] * original[i];
+        double noise = original[i] - quantized[i];
+        noisePower += noise * noise;
+    }
+    return 10 * std::log10(signalPower / noisePower);
 }
 
 int main() {
@@ -52,7 +76,7 @@ int main() {
     unsigned int channelCount = buffer.getChannelCount();
     float duration = static_cast<float>(sampleCount) / sampleRate / channelCount;
 
-    std::cout << "Sample Rate: " << sampleRate << " Hz" << std::endl;
+    std::cout << "\nSample Rate: " << sampleRate << " Hz" << std::endl;
     std::cout << "Channels: " << channelCount << std::endl;
     std::cout << "Duration: " << duration << " seconds" << std::endl;
 
@@ -80,7 +104,7 @@ int main() {
     createHistogram(midChannel, "samples/mid_channel_histogram.txt", binSize);
     createHistogram(sideChannel, "samples/side_channel_histogram.txt", binSize);
 
-        // Quantize the audio samples
+    // Quantize the audio samples
     int numLevels = 16; // Adjust the number of levels as needed
     std::vector<int> quantizedLeftChannel = uniformQuantization(leftChannel, numLevels);
     std::vector<int> quantizedRightChannel = uniformQuantization(rightChannel, numLevels);
@@ -88,13 +112,24 @@ int main() {
     std::vector<int> quantizedSideChannel = uniformQuantization(sideChannel, numLevels);
 
     // Save the quantized samples to a file
-    std::cout << "Creating quantized_audio_sample.txt" << std::endl;
+    std::cout << "\nCreating quantized_audio_sample.txt" << std::endl;
     std::ofstream quantizedOutFile("samples/quantized_audio_sample.txt");
     for (std::size_t i = 0; i < quantizedLeftChannel.size(); ++i) {
         quantizedOutFile << quantizedLeftChannel[i] << " " << quantizedRightChannel[i] << " "
                          << quantizedMidChannel[i] << " " << quantizedSideChannel[i] << std::endl;
     }
     quantizedOutFile.close();
+
+        // Calculate MSE and SNR
+    double mseLeft = calculateMSE(leftChannel, quantizedLeftChannel);
+    double snrLeft = calculateSNR(leftChannel, quantizedLeftChannel);
+    double mseRight = calculateMSE(rightChannel, quantizedRightChannel);
+    double snrRight = calculateSNR(rightChannel, quantizedRightChannel);
+
+    std::cout << "\nMSE (Left Channel): " << mseLeft << std::endl;
+    std::cout << "SNR (Left Channel): " << snrLeft << " dB" << std::endl;
+    std::cout << "MSE (Right Channel): " << mseRight << std::endl;
+    std::cout << "SNR (Right Channel): " << snrRight << " dB" << std::endl;
 
     return 0;
 }
