@@ -120,7 +120,7 @@ int main() {
     }
     quantizedOutFile.close();
 
-        // Calculate MSE and SNR
+    // Calculate MSE and SNR
     double mseLeft = calculateMSE(leftChannel, quantizedLeftChannel);
     double snrLeft = calculateSNR(leftChannel, quantizedLeftChannel);
     double mseRight = calculateMSE(rightChannel, quantizedRightChannel);

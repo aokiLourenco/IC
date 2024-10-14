@@ -6,6 +6,7 @@
 #include <cctype>
 #include <map>
 #include <sstream>
+#include <cmath>
 
 // convert a string to lowercase
 std::string toLowerCase(const std::string& str) {
@@ -51,9 +52,19 @@ std::map<std::string, int> countWordFrequencies(const std::vector<std::string>& 
     return wordFrequency;
 }
 
+// calculate entropy
+double calculateEntropy(const std::map<char, int>& charFrequency, int totalCharacters) {
+    double entropy = 0.0;
+    for (const auto& pair : charFrequency) {
+        double probability = static_cast<double>(pair.second) / totalCharacters;
+        entropy -= probability * std::log2(probability);
+    }
+    return entropy;
+}
+
 int main() {
     // file stream object
-    std::ifstream file("samples/ep-01-01-15.txt");
+    std::ifstream file("../samples/pt/ep-00-01-17.txt");
 
     // check if file opened
     if (!file.is_open()) {
@@ -119,10 +130,19 @@ int main() {
             break;
         case 4: {
             std::map<char, int> charFrequency = countCharacterFrequencies(transformedContent);
+            int totalChars = 0;
+            
             std::cout << "Character frequencies: " << std::endl;
             for (const auto& pair : charFrequency) {
                 std::cout << pair.first << ": " << pair.second << std::endl;
             }
+            
+            for (const auto& pair : charFrequency) {
+                totalChars += pair.second;
+            }
+            double entropy = calculateEntropy(charFrequency, totalChars);
+            std::cout << "Entropy: " << entropy << std::endl;
+            
             break;
         }
         case 5: {
