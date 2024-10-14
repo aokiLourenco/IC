@@ -113,7 +113,7 @@ int main() {
 
     // Save the quantized samples to a file
     std::cout << "\nCreating quantized_audio_sample.txt" << std::endl;
-    std::ofstream quantizedOutFile("samples/quantized_audio_sample.txt");
+    std::ofstream quantizedOutFile("../samples/quantized_audio_sample.txt");
     for (std::size_t i = 0; i < quantizedLeftChannel.size(); ++i) {
         quantizedOutFile << quantizedLeftChannel[i] << " " << quantizedRightChannel[i] << " "
                          << quantizedMidChannel[i] << " " << quantizedSideChannel[i] << std::endl;
