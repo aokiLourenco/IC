@@ -53,10 +53,11 @@ std::map<std::string, int> countWordFrequencies(const std::vector<std::string>& 
 }
 
 // calculate entropy
+// ( H = -\sum p(x) \log_2 p(x) ), ( p(x) ) is the probability of character ( x ).
 double calculateEntropy(const std::map<char, int>& charFrequency, int totalCharacters) {
     double entropy = 0.0;
     for (const auto& pair : charFrequency) {
-        double probability = static_cast<double>(pair.second) / totalCharacters;
+        double probability = static_cast<double>(pair.second) / totalCharacters; // static_cast<double> ensures that the division is done in floating-point arithmetic rather than integer arithmetic.
         entropy -= probability * std::log2(probability);
     }
     return entropy;
@@ -141,7 +142,7 @@ int main() {
                 totalChars += pair.second;
             }
             double entropy = calculateEntropy(charFrequency, totalChars);
-            std::cout << "Entropy: " << entropy << std::endl;
+            std::cout << "\nEntropy: " << entropy << std::endl;
             
             break;
         }
