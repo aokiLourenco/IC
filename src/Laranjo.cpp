@@ -7,7 +7,7 @@ using namespace std;
 // Function to read and print the contents of "t1.txt"
 int T1() {
     string line;
-    std::ifstream file("t1.txt");
+    std::ifstream file("hugetxt.txt");
     if (file.is_open()) {
         while (getline(file, line)) {
             cout << line << '\n';
@@ -22,7 +22,7 @@ int T1() {
 // Function to read "t1.txt" and perform operations based on the option provided
 int T2(int Option) {
     string line;
-    std::ifstream file("t1.txt");
+    std::ifstream file("hugetxt.txt");
     if (file.is_open()) {
         if(Option == 1) {
             // Convert all characters to lowercase and print
@@ -59,7 +59,7 @@ int T2(int Option) {
 int T3() {
     string line;
     std::map <char, int> freq;
-    std::ifstream file("t1.txt");
+    std::ifstream file("hugetxt.txt");
     if (file.is_open()) {
         while (getline(file, line)) {
             for (char &c : line) {
@@ -87,7 +87,7 @@ int T3() {
 int T4() {
     string line;
     std::map <string, int> freq;
-    std::ifstream file("t1.txt");
+    std::ifstream file("hugetxt.txt");
     if (file.is_open()) {
         while (getline(file, line)) {
             string word;
@@ -104,11 +104,11 @@ int T4() {
     } else {
         cout << "Unable to open file";
     }
-    cout << "-----------------------------------";
+    cout << "-----------------------------------\n";
     for (auto &c : freq) {
         cout << c.first << ": " << c.second << endl;
     }
-    cout << "-----------------------------------";
+    cout << "-----------------------------------\n";
     return 0;
 }
 
