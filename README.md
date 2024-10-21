@@ -7,6 +7,7 @@ This project includes three main executables, each designed for specific tasks. 
 To build the project, navigate to the `build/` directory and run the following command:
 
 ```bash
+cmake ..
 make
 ```
 
