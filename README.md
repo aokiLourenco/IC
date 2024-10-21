@@ -1,7 +1,7 @@
 # Project Name
 
 ## Overview
-This project includes three main executables, each designed for specific tasks. The tasks are organized under `P1`, `P2`, and `P3`. The executables are currently set up with hard-coded input files.
+This project includes three main executables, each designed for specific tasks. The tasks are organized under `P1`, `P2`, and `P3`.
 
 ## How to Build
 To build the project, navigate to the `build/` directory and run the following command:
