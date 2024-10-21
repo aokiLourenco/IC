@@ -14,7 +14,7 @@ find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories(${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
 
 # Set the path for matplotlibcpp
-set(MATPLOTLIBCPP_DIR ${PROJECT_SOURCE_DIR}/matplotlib-cpp)
+set(MATPLOTLIBCPP_DIR ${PROJECT_SOURCE_DIR}/matplotlib)
 include_directories(${MATPLOTLIBCPP_DIR})
 
 # Find the SFML package
@@ -29,13 +29,13 @@ find_package(OpenCV REQUIRED)
 # Include directories for OpenCV
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(T1 src/Laranjo.cpp)
-add_executable(T2 src/LaranjoT2.cpp)
-add_executable(T3 src/LaranjoP3.cpp)
+add_executable(P1 src/P1.cpp)
+add_executable(P2 src/P2.cpp)
+add_executable(P3 src/P3.cpp)
 
 # Link Python libraries to T1 and T2 executables if they are separate
-target_link_libraries(T1 PRIVATE ${Python3_LIBRARIES} sfml-audio)
-target_link_libraries(T2 PRIVATE ${Python3_LIBRARIES} sfml-audio)
-target_link_libraries(T3 PRIVATE ${OpenCV_LIBS} ${Python3_LIBRARIES})
+target_link_libraries(P1 PRIVATE ${Python3_LIBRARIES} sfml-audio)
+target_link_libraries(P2 PRIVATE ${Python3_LIBRARIES} sfml-audio)
+target_link_libraries(P3 PRIVATE ${OpenCV_LIBS} ${Python3_LIBRARIES})
 
 
