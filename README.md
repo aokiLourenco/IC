@@ -15,8 +15,8 @@ How to Run
 
 After building, you can run the executables for each task:
 
-    T1: Executes Task 1
-    T2: Executes Task 2
-    T3: Executes Task 3
+    ./T1 <file_name> <file_name>
+    ./T2: <file_name> <file_name>
+    ./T3: <file_name> <file_name>
 
 Please note that the executables currently rely on predefined input files, so you cannot provide custom input files at this time.
