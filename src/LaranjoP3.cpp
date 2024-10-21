@@ -16,10 +16,6 @@ void T1(const std::string& imagePath) {
 
     // Display the image
     cv::imshow("Display window", image);
-
-    // Wait for a keystroke in the window
-    cv::waitKey(0);
-    cv::destroyAllWindows();
 }
 
 void T2(const std::string& imagePath) {
@@ -76,7 +72,9 @@ void T3(const std::string& imagePath) {
     cv::Mat grayImage;
     cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
 
+    // Display the grayscale image
     cv::imshow("Grayscale Image", grayImage);
+    cv::waitKey(0); // Wait for a key press to ensure the image is displayed
 
     // Calculate the histogram
     cv::Mat hist;
@@ -98,7 +96,6 @@ void T3(const std::string& imagePath) {
     plt::xlabel("Pixel Intensity");
     plt::ylabel("Frequency");
     plt::show();
-
 
     cv::destroyAllWindows();
 }
@@ -130,11 +127,6 @@ void T4(const std::string& imagePath) {
     cv::destroyAllWindows();
 }
 
-// Calculating the difference between two images.
-// - Implement a function to calculate the absolute difference between two images.
-// - Compute and display the Mean Squared Error (MSE) and Peak Signal-to-Noise Ratio (PSNR) 
-// between the two images.
-// - Display the difference image to visually observe where the differences are.
 void T5(const std::string& imagePath1, const std::string& imagePath2) {
     // Load the images from the files
     cv::Mat image1 = cv::imread(imagePath1, cv::IMREAD_COLOR);
@@ -170,16 +162,10 @@ void T5(const std::string& imagePath1, const std::string& imagePath2) {
     std::cout << "Peak Signal-to-Noise Ratio (PSNR): " << psnr << " dB" << std::endl;
     
     // Wait for a key press and close all windows
-    cv::waitKey(0);
     cv::destroyAllWindows();
 }
 
-// - Image quantization. To reduce the number of bits used to represent each image (i.e., to perform 
-// uniform scalar quantization).
-// - Implement the quantization function on grayscale images.
-// - Experiment with different numbers of quantization levels.
-// - Compare the original image with the quantized one using MSE and PSNR to evaluate the qualit
-void T6 (const std::string& imagePath, int numBits) {
+void T6(const std::string& imagePath, int numBits) {
     // Load the image from the file
     cv::Mat image = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
 
@@ -227,16 +213,41 @@ void T6 (const std::string& imagePath, int numBits) {
     std::cout << "Quantization Level: " << numBits << " bits" << std::endl;
     std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
     std::cout << "Peak Signal-to-Noise Ratio (PSNR): " << psnr << " dB" << std::endl;
+    cv::destroyAllWindows();
 }
 
-int main() {
-    std::string image = "To.png"; // Replace with your image path
-    std::string image2 = "kaitou.png";
-    // T1(image);
-    // T2(image);
-    // T3(image);
-    // T4(image);
-    // T5(image, image2);
-    T6 (image, 5);
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <image1> <image2>" << std::endl;
+        return 1;
+    }
+
+    std::string image1 = std::string("./data/") + argv[1];
+    std::string image2 = std::string("./data/") + argv[2];
+
+    std::cout << "Executing T1" << std::endl;
+    T1(image1);
+    std::cout << "-------------------------------" << std::endl;
+
+    std::cout << "Executing T2" << std::endl;
+    T2(image1);
+    std::cout << "-------------------------------" << std::endl;
+
+    std::cout << "Executing T3" << std::endl;
+    T3(image1);
+    std::cout << "-------------------------------" << std::endl;
+
+    std::cout << "Executing T4" << std::endl;
+    T4(image1);
+    std::cout << "-------------------------------" << std::endl;
+
+    std::cout << "Executing T5" << std::endl;
+    T5(image1, image2);
+    std::cout << "-------------------------------" << std::endl;
+
+    std::cout << "Executing T6" << std::endl;
+    T6(image1, 5);
+    std::cout << "-------------------------------" << std::endl;
+
     return 0;
 }

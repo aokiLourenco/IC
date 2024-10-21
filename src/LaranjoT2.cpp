@@ -12,16 +12,8 @@ using namespace std;
 
 constexpr size_t FRAMES_BUFFER_SIZE = 65536; // Buffer for reading/writing frames
 
-
 // Function to load and process a .wav audio file
-int T1(const std::string& filename) {
-    // Load an audio file
-    sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile("sample.wav")) {
-        std::cerr << "Error loading audio file" << std::endl;
-        return -1;
-    }
-
+int T1(const sf::SoundBuffer& buffer) {
     // Extract raw audio samples
     const sf::Int16* samples = buffer.getSamples();
     std::size_t sampleCount = buffer.getSampleCount();
@@ -39,15 +31,7 @@ int T1(const std::string& filename) {
     return 0;
 }
 
-int T2(const std::string& filename) {
-    sf::SoundBuffer buffer;
-
-    // Load the audio file
-    if (!buffer.loadFromFile(filename)) {
-        std::cerr << "Error loading audio file: " << filename << std::endl;
-        return -1;
-    }
-
+int T2(const sf::SoundBuffer& buffer) {
     // Get audio samples
     const sf::Int16* samples = buffer.getSamples();
     std::size_t sampleCount = buffer.getSampleCount();
@@ -67,22 +51,14 @@ int T2(const std::string& filename) {
     plt::plot(time, amplitude);
     plt::xlabel("Time (seconds)");
     plt::ylabel("Amplitude");
-    plt::title("Waveform of " + filename);
+    plt::title("Waveform");
     plt::grid(true);
     plt::show();  // Display the plot
 
     return 0; // Return success
 }
 
-int T3(const std::string& filename) {
-    sf::SoundBuffer buffer;
-
-    // Load the audio file
-    if (!buffer.loadFromFile(filename)) {
-        std::cerr << "Error loading audio file: " << filename << std::endl;
-        return -1;
-    }
-
+int T3(const sf::SoundBuffer& buffer) {
     // Get audio samples
     const sf::Int16* samples = buffer.getSamples();
     std::size_t sampleCount = buffer.getSampleCount();
@@ -137,20 +113,11 @@ int T3(const std::string& filename) {
     return 0;
 }
 
-int T4(const std::string& filename) {
-    sf::SoundBuffer buffer;
-
-    // Load the audio file
-    if (!buffer.loadFromFile(filename)) {
-        std::cerr << "Error loading audio file: " << filename << std::endl;
-        return -1;
-    }
-
+int T4(const sf::SoundBuffer& buffer) {
     // Get audio samples
     const sf::Int16* samples = buffer.getSamples();
     std::size_t sampleCount = buffer.getSampleCount();
     unsigned int sampleRate = buffer.getSampleRate();
-    unsigned int channelCount = buffer.getChannelCount();
     unsigned int numBits = 2; // 16 is turning point
     // Prepare vectors for original and quantized samples
     std::vector<double> originalSamples(sampleCount);
@@ -196,6 +163,7 @@ int T4(const std::string& filename) {
     return 0;
 }
 
+// Function to calculate MSE
 double calculateMSE(const std::vector<double>& original, const std::vector<double>& processed) {
     double mse = 0.0;
     std::size_t count = original.size();
@@ -207,6 +175,7 @@ double calculateMSE(const std::vector<double>& original, const std::vector<doubl
     return mse / count; // Return average
 }
 
+// Function to calculate SNR
 double calculateSNR(const std::vector<double>& original, const std::vector<double>& processed) {
     double signalPower = 0.0;
     double noisePower = 0.0;
@@ -223,46 +192,36 @@ double calculateSNR(const std::vector<double>& original, const std::vector<doubl
     return 10 * std::log10(signalPower / noisePower); // Return SNR in dB
 }
 
-int T5(const std::string& filename, const std::string& filename2) {
-    sf::SoundBuffer buffer;
+// Function to compare two audio files
+int T5(const sf::SoundBuffer& originalBuffer, const sf::SoundBuffer& processedBuffer) {
+    // Get audio samples
+    const sf::Int16* originalSamples = originalBuffer.getSamples();
+    const sf::Int16* processedSamples = processedBuffer.getSamples();
+    std::size_t sampleCount = originalBuffer.getSampleCount();
+    unsigned int sampleRate = originalBuffer.getSampleRate();
 
-    // Load the audio file
-    if (!buffer.loadFromFile(filename)) {
-        std::cerr << "Error loading audio file: " << filename << std::endl;
+    // Ensure both buffers have the same number of samples
+    if (sampleCount != processedBuffer.getSampleCount()) {
+        std::cerr << "Error: The two audio files must have the same number of samples." << std::endl;
         return -1;
     }
 
-    // Get audio samples
-    const sf::Int16* samples = buffer.getSamples();
-    std::size_t sampleCount = buffer.getSampleCount();
-    unsigned int sampleRate = buffer.getSampleRate();
-    unsigned int numBits = 10;
-    // Prepare vectors for original and quantized samples
-    std::vector<double> originalSamples(sampleCount);
-    std::vector<double> quantizedSamples(sampleCount);
-
-    int maxVal = (1 << 15) - 1; // Max value for 16-bit signed samples (SFML uses 16-bit audio)
-
-    // Quantization step
-    int numLevels = (1 << numBits) - 1; // Number of distinct levels based on numBits
+    // Prepare vectors for original and processed samples
+    std::vector<double> original(sampleCount);
+    std::vector<double> processed(sampleCount);
 
     for (std::size_t i = 0; i < sampleCount; ++i) {
-        // Store the original sample
-        originalSamples[i] = static_cast<double>(samples[i]);
-
-        // Uniform quantization: scale to [0, numLevels], then map back to [-maxVal, maxVal]
-        quantizedSamples[i] = round((originalSamples[i] / maxVal) * numLevels) * (maxVal / numLevels);
+        original[i] = static_cast<double>(originalSamples[i]);
+        processed[i] = static_cast<double>(processedSamples[i]);
     }
 
     // Calculate MSE and SNR
-    double mse = calculateMSE(originalSamples, quantizedSamples);
-    double snr = calculateSNR(originalSamples, quantizedSamples);
+    double mse = calculateMSE(original, processed);
+    double snr = calculateSNR(original, processed);
 
-    std::cout << "Quantization Level: " << numBits << " bits" << std::endl;
     std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
     std::cout << "Signal-to-Noise Ratio (SNR): " << snr << " dB" << std::endl;
 
-    // Optionally plot the original and quantized waveforms
     // Time vector for plotting
     std::vector<double> time(sampleCount);
     for (std::size_t i = 0; i < sampleCount; ++i) {
@@ -271,17 +230,17 @@ int T5(const std::string& filename, const std::string& filename2) {
 
     // Plot the original waveform
     plt::figure_size(1200, 400);
-    plt::plot(time, originalSamples);
+    plt::plot(time, original);
     plt::title("Original Waveform");
     plt::xlabel("Time (seconds)");
     plt::ylabel("Amplitude");
     plt::grid(true);
     plt::show();
 
-    // Plot the quantized waveform
+    // Plot the processed waveform
     plt::figure_size(1200, 400);
-    plt::plot(time, quantizedSamples);
-    plt::title("Quantized Waveform with " + std::to_string(numBits) + " Bits");
+    plt::plot(time, processed);
+    plt::title("Processed Waveform");
     plt::xlabel("Time (seconds)");
     plt::ylabel("Amplitude");
     plt::grid(true);
@@ -291,35 +250,43 @@ int T5(const std::string& filename, const std::string& filename2) {
 }
 
 
-int main() {
-    int choice;
-    cout << "Choose a function to run: " << endl;
-    cout << "1. T1" << endl;
-    cout << "2. T2" << endl;
-    cout << "3. T3" << endl;
-    cout << "4. T4" << endl;
-    cout << "5. T5" << endl;
-
-    std::cin >> choice;
-
-    switch(choice) {
-        case 1:
-            T1("sample.wav");
-            break;
-        case 2:
-            T2("sample.wav");
-            break;
-        case 3:
-            T3("sample.wav");
-            break;
-        case 4:
-            T4("sample.wav");
-            break;
-        case 5:
-            T5("sample.wav", "sample_2.wav");
-            break;
-        default:
-            cout << "Invalid choice" << endl;
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <file_name1> <file_name2>" << std::endl;
+        return 1;
     }
+
+    std::cerr << "Only the first file in the command prompt is being tested for the all the functions except T5." << std::endl;
+    std::string filename1 = std::string("./data/") + argv[1] + ".wav";
+    std::string filename2 = std::string("./data/") + argv[2] + ".wav";
+
+    sf::SoundBuffer buffer1;
+    sf::SoundBuffer buffer2;
+    if (!buffer1.loadFromFile(filename1)) {
+        std::cerr << "Error loading audio file: " << filename1 << std::endl;
+        return -1;
+    }
+    if (!buffer2.loadFromFile(filename2)) {
+        std::cerr << "Error loading audio file: " << filename2 << std::endl;
+        return -1;
+    }
+
+    // Execute all cases
+    std::cout << "Executing T1" << std::endl;
+    T1(buffer1);
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Executing T2" << std::endl;
+    T2(buffer1);
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Executing T3" << std::endl;
+    T3(buffer1);
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Executing T4" << std::endl;
+    T4(buffer1);
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Executing T5" << std::endl;
+    T5(buffer1, buffer2);
+    std::cout << "-------------------------------" << std::endl;
+
     return 0;
 }
