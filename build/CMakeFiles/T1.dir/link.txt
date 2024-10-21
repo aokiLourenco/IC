@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/T1.dir/src/Laranjo.cpp.o -o T1  /usr/lib/x86_64-linux-gnu/libpython3.12.so /usr/lib/x86_64-linux-gnu/libsfml-audio.so.2.6.1 /usr/lib/x86_64-linux-gnu/libsfml-system.so.2.6.1 

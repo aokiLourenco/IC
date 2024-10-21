@@ -1,5 +1,0 @@
-/home/laranjo/Desktop/MECT/Major_1st/1st_Sem/IC/1st_Class/build/CMakeFiles/T1.dir
-/home/laranjo/Desktop/MECT/Major_1st/1st_Sem/IC/1st_Class/build/CMakeFiles/T2.dir
-/home/laranjo/Desktop/MECT/Major_1st/1st_Sem/IC/1st_Class/build/CMakeFiles/T3.dir
-/home/laranjo/Desktop/MECT/Major_1st/1st_Sem/IC/1st_Class/build/CMakeFiles/edit_cache.dir
-/home/laranjo/Desktop/MECT/Major_1st/1st_Sem/IC/1st_Class/build/CMakeFiles/rebuild_cache.dir

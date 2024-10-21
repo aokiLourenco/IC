@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/result_plot.dir/src/LaranjoT2.cpp.o -o result_plot 

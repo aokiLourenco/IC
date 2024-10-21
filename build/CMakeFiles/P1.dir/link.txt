@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/P1.dir/src/Laranjo.cpp.o -o P1  /usr/lib/x86_64-linux-gnu/libpython3.12.so 
