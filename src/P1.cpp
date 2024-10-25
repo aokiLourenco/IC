@@ -172,6 +172,7 @@ int main(int argc, char* argv[]) {
     std::cout << "-------------------------------" << std::endl;
     double entropy = calculateEntropy(charFrequency, totalChars);
     std::cout << "\nEntropy: " << entropy << std::endl;
+    std::cout << "-------------------------------" << std::endl;
 
     // Word frequencies
     std::map<std::string, int> wordFrequency = countWordFrequencies(transformedContent);
