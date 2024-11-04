@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/P2.dir/src/P2.cpp.o -o P2  /usr/lib/x86_64-linux-gnu/libpython3.10.so /usr/lib/x86_64-linux-gnu/libsfml-audio.so.2.5.1 /usr/lib/x86_64-linux-gnu/libsfml-system.so.2.5.1 

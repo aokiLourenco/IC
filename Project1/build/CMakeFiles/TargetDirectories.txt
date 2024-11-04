@@ -1,0 +1,5 @@
+/home/aoki/Desktop/UA/IC/build/CMakeFiles/P1.dir
+/home/aoki/Desktop/UA/IC/build/CMakeFiles/P2.dir
+/home/aoki/Desktop/UA/IC/build/CMakeFiles/P3.dir
+/home/aoki/Desktop/UA/IC/build/CMakeFiles/edit_cache.dir
+/home/aoki/Desktop/UA/IC/build/CMakeFiles/rebuild_cache.dir
