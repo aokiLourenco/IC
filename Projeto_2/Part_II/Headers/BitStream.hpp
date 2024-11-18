@@ -1,3 +1,6 @@
+#ifndef BITSTREAM_HPP
+#define BITSTREAM_HPP
+
 #include <fstream>
 #include <string>
 #include <vector>
@@ -7,6 +10,7 @@
 
 class BitStream {
 public:
+    BitStream();
     BitStream(const std::string& filename, bool writeMode);
     ~BitStream();
     void writeBit(bool bit);
@@ -20,10 +24,18 @@ public:
     bool isEndOfStream();
     std::fstream& getFile();
     int getBufferPos();
+    int setToWrite(const std::string& filename);
+    int setToRead(const std::string& filename);
 
 private:
     std::fstream file;
     bool writeMode;
     uint8_t buffer;
     int bufferPos;
+    int buff;
+    int mode;
+    bool eof;
+    int bitCount;
 };
+
+#endif // BITSTREAM_HPP

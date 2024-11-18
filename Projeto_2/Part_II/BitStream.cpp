@@ -5,10 +5,16 @@
 #include <cstdint>
 #include <iostream>
 
-#include "./Headers/BitStream.h"
+#include "./Headers/BitStream.hpp"
+
+using namespace std;
+
+BitStream::BitStream()
+    : writeMode(false), buffer(0), bufferPos(0), buff(0), mode(0), eof(false), bitCount(0) {
+}
 
 BitStream::BitStream(const std::string& filename, bool writeMode)
-    : writeMode(writeMode), buffer(0), bufferPos(0) {
+    : writeMode(writeMode), buffer(0), bufferPos(0), buff(0), mode(0), eof(false), bitCount(0) {
     if (writeMode) {
         file.open(filename, std::ios::out | std::ios::binary);
     } else {
@@ -26,14 +32,6 @@ BitStream::~BitStream() {
     file.close();
 }
 
-void BitStream::writeBit(bool bit) {
-    buffer = (buffer << 1) | bit;
-    bufferPos++;
-    if (bufferPos == 8) {
-        flushBuffer();
-    }
-}
-
 bool BitStream::readBit() {
     if (bufferPos == 0) {
         fillBuffer();
@@ -47,18 +45,26 @@ bool BitStream::readBit() {
     return bit;
 }
 
-void BitStream::writeBits(uint64_t value, int n) {
-    for (int i = n - 1; i >= 0; --i) {
-        writeBit((value >> i) & 1);
-    }
-}
-
 uint64_t BitStream::readBits(int n) {
     uint64_t value = 0;
     for (int i = 0; i < n; ++i) {
         value = (value << 1) | readBit();
     }
     return value;
+}
+
+void BitStream::writeBit(bool bit) {
+    buffer = (buffer << 1) | bit;
+    bufferPos++;
+    if (bufferPos == 8) {
+        flushBuffer();
+    }
+}
+
+void BitStream::writeBits(uint64_t value, int n) {
+    for (int i = n - 1; i >= 0; --i) {
+        writeBit((value >> i) & 1);
+    }
 }
 
 void BitStream::writeString(const std::string& str) {
@@ -113,4 +119,38 @@ std::fstream& BitStream::getFile() {
 
 int BitStream::getBufferPos() {
     return bufferPos;
+}
+
+int BitStream::setToWrite(const string& filename)
+{
+    file.close();
+    file.open(filename, fstream::binary | fstream::out | fstream::app);
+    if (!file.is_open())
+    {
+        cerr << "Couldn't open specified file for writing!" << endl;
+        exit(1);
+    }
+
+    mode = 1;
+    buff = 0;
+    bitCount = 0;
+
+    return 0;
+}
+
+int BitStream::setToRead(const string& filename) {
+    file.close();
+    file.open(filename, fstream::binary | fstream::out | fstream::app);
+    if (!file.is_open())
+    {
+        cerr << "Couldn't open specified file for reading!" << endl;
+        exit(1);
+    }
+
+    mode = 0;
+    buff = 0;
+    bitCount = 8;
+    eof = false;
+
+    return 0;
 }

@@ -35,7 +35,6 @@ void Encoder::encode() {
             throw std::runtime_error("Invalid character in input file");
         }
     }
-    bitStream.flushBuffer();
 
     // Write the number of valid bits in the last byte to a metadata file
     std::ofstream metadataFile("output.meta", std::ios::out);
@@ -43,11 +42,12 @@ void Encoder::encode() {
         throw std::runtime_error("Failed to open metadata file");
     }
     metadataFile << bitStream.getBufferPos();
+    bitStream.flushBuffer();
     metadataFile.close();
 }
 
 int main() {
-    Encoder Encoder("Fake_Binary.txt", "output.bin");
+    Encoder Encoder("../Data/Fake_Binary.txt", "output.bin");
     Encoder.encode();
     return 0;
 }
