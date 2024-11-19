@@ -1,10 +1,3 @@
-#include <fstream>
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <cstdint>
-#include <iostream>
-
 #include "./Headers/BitStream.hpp"
 
 using namespace std;
@@ -48,6 +41,9 @@ bool BitStream::readBit() {
 uint64_t BitStream::readBits(int n) {
     uint64_t value = 0;
     for (int i = 0; i < n; ++i) {
+        if (isEndOfStream()) {
+            throw std::runtime_error("Attempt to read beyond end of file while reading bits");
+        }
         value = (value << 1) | readBit();
     }
     return value;
@@ -121,12 +117,10 @@ int BitStream::getBufferPos() {
     return bufferPos;
 }
 
-int BitStream::setToWrite(const string& filename)
-{
+int BitStream::setToWrite(const string& filename) {
     file.close();
     file.open(filename, fstream::binary | fstream::out | fstream::app);
-    if (!file.is_open())
-    {
+    if (!file.is_open()) {
         cerr << "Couldn't open specified file for writing!" << endl;
         exit(1);
     }
@@ -140,9 +134,8 @@ int BitStream::setToWrite(const string& filename)
 
 int BitStream::setToRead(const string& filename) {
     file.close();
-    file.open(filename, fstream::binary | fstream::out | fstream::app);
-    if (!file.is_open())
-    {
+    file.open(filename, fstream::binary | fstream::in);
+    if (!file.is_open()) {
         cerr << "Couldn't open specified file for reading!" << endl;
         exit(1);
     }
@@ -153,4 +146,26 @@ int BitStream::setToRead(const string& filename) {
     eof = false;
 
     return 0;
+}
+
+int BitStream::getValidBitsInLastByte() {
+    return bufferPos;
+}
+
+std::fstream& BitStream::getFileStream() {
+    return file;
+}
+
+void BitStream::close() {
+    if (mode && bitCount != 0)
+    {
+        while (bitCount)
+            writeBit(0);
+    }
+
+    file.close();
+}
+
+bool BitStream::getEOF() {
+    return eof;
 }

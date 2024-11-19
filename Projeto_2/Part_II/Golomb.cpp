@@ -5,39 +5,21 @@
 #include <cstdint>
 #include <iostream>
 #include <opencv2/opencv.hpp>
-
 #include "./Headers/BitStream.hpp"
-#include "BitStream.cpp"
-
 #include "./Headers/Golomb.hpp"
 
-// This class should include functions for encoding and decoding
-// integers, utilizing the BitStream class for efficient bit-level manipulation. The Golomb coding scheme
-// requires a parameter m, which controls the encoding length, making it adaptable to specific probability
-// distributions. Your implementation should handle both positive and negative integers. For negative values,
-// provide two encoding approaches (configurable by the user):
-// 1. Sign and magnitude: encode the sign separately from the magnitude.
-// 2. Positive/negative interleaving: Use a zigzag or odd-even mapping to interleave positive and negative values, so all numbers map to non-negative integers.
-
-// Specifications:
-// • Bit efficiency: use the BitStream class for efficient bit manipulation.
-// • Parameterization: ensure the class can easily switch between modes and values of m for flexibility
-// in encoding different distributions.
-// • Handling negative values: Implement both sign and magnitude and interleaving for representing
-// negative numbers
 using namespace cv;
 
-EncoderGolomb::EncoderGolomb(string file_path) {
-    bitStream.setToWrite(file_path);
+EncoderGolomb::EncoderGolomb(std::string file_path, EncodingMode mode) : bitStream(file_path, true), mode(mode) {
     this->set_M(3);
 }
 
 void EncoderGolomb::set_M(int m) {
-    if (m == 0) {
-        return;
+    if (m <= 0) {
+        throw std::invalid_argument("M must be greater than 0");
     }
     this->M = m;
-    this->b = ceil(log2(m));
+    this->b = static_cast<int>(ceil(log2(m)));
 }
 
 int EncoderGolomb::get_M() {
@@ -53,52 +35,59 @@ int EncoderGolomb::optimal_m(cv::Mat &frame) {
     u /= frame.channels();
     if (u < 0.01)
         return 2;
-    int s = ceil(log2(u) - 0.05 + 0.6 / u);
+    int s = static_cast<int>(ceil(log2(u) - 0.05 + 0.6 / u));
 
     s = (0 > s) ? 0 : s;
-    return pow(2, s);
+    return 1 << s; // Use bitwise shift instead of pow
 }
 
 void EncoderGolomb::encode(int Number) {
-    int r, q;
+    int mappedNumber;
+    if (mode == EncodingMode::SIGN_MAGNITUDE) {
+        mappedNumber = Number < 0 ? (-Number << 1) | 1 : Number << 1;
+    } else { // INTERLEAVING
+        mappedNumber = (Number < 0) ? (-Number << 1) - 1 : Number << 1;
+    }
 
-    if (Number < 0)
+    int q = mappedNumber / M;
+    int r = mappedNumber % M;
+
+    // Debug print
+    std::cout << "Number: " << Number << ", Mapped Number: " << mappedNumber << ", Quotient: " << q << ", Remainder: " << r << std::endl;
+
+    // Encode the quotient using unary coding
+    for (int i = 0; i < q; ++i) {
         bitStream.writeBit(1);
-    else
-        bitStream.writeBit(0);
-
-    Number = abs(Number);
-
-    q = Number / M; 
-
-    r = Number % M;
-
-    for (int i = 0; i < q; i++)
-        bitStream.writeBit(1);
-
+    }
     bitStream.writeBit(0);
 
+    // Encode the remainder using binary coding
     if (M % 2 == 0) {
         bitStream.writeBits(r, b);
-    } else if (r < pow(2, b + 1) - M) {
-        bitStream.writeBits(r, b);
     } else {
-        bitStream.writeBits(r + pow(2, b + 1) - M, b + 1);
+        if (r < (1 << b) - M) {
+            bitStream.writeBits(r, b);
+        } else {
+            bitStream.writeBits(r + (1 << b) - M, b + 1);
+        }
     }
 }
 
-DecoderGolomb::DecoderGolomb(string file_path)
-{
-    bitStream.setToRead(file_path);
+
+void EncoderGolomb::finishEncoding() {
+    bitStream.close();
+}
+
+DecoderGolomb::DecoderGolomb(std::string file_path, EncodingMode mode) : bitStream(file_path, false), mode(mode) {
     this->set_M(3);
 }
 
 void DecoderGolomb::set_M(int m) {
-    if (m == 0) {
-        return;
+    if (m <= 0) {
+        throw std::invalid_argument("M must be greater than 0");
     }
     this->M = m;
-    this->b = ceil(log2(m));
+    this->b = static_cast<int>(ceil(log2(m)));
 }
 
 int DecoderGolomb::get_M() {
@@ -106,19 +95,48 @@ int DecoderGolomb::get_M() {
 }
 
 int DecoderGolomb::decode() {
-    int r, r2, q;
+    int r, q, r2, N;
 
     q = 0;
-
-    if(bitStream.isEndOfStream())
-        return NULL;
-
-    while (true)
-    {
+    // Read unary part (q = count of 1s before the 0)
+    while (true) {
+        if (bitStream.isEndOfStream()) {
+            throw std::runtime_error("Attempt to read beyond end of file while reading unary part");
+        }
         if ((bitStream.readBit() & 1) == 0)
             break;
         q++;
     }
 
-    
+    // Read remainder bits
+    if (M % 2 == 0) {
+        if (bitStream.isEndOfStream()) {
+            throw std::runtime_error("Attempt to read beyond end of file while reading remainder bits (even M)");
+        }
+        r = bitStream.readBits(b);
+    } else {
+        r2 = bitStream.readBits(b);
+        if (r2 < (1 << b) - M) {
+            r = r2;
+        } else {
+            if (bitStream.isEndOfStream()) {
+                throw std::runtime_error("Attempt to read beyond end of file while reading remainder bits (odd M, part 2)");
+            }
+            r = (r2 << 1) | bitStream.readBit();
+            r -= (1 << b) - M; // Adjusting the decrement
+        }
+    }
+
+    N = q * M + r;
+
+    // Debug print
+    std::cout << "Quotient: " << q << ", Remainder: " << r << ", N: " << N << std::endl;
+
+    if (mode == EncodingMode::SIGN_MAGNITUDE) {
+        std::cout << "Decoded Number (SIGN_MAGNITUDE): " << ((N & 1) ? -(N >> 1) : (N >> 1)) << std::endl;
+        return (N & 1) ? -(N >> 1) : (N >> 1);
+    } else { // INTERLEAVING
+        std::cout << "Decoded Number (INTERLEAVING): " << ((N & 1) ? -(N >> 1) - 1 : (N >> 1)) << std::endl;
+        return (N & 1) ? -(N >> 1) - 1 : (N >> 1);
+    }
 }

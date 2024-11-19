@@ -15,6 +15,8 @@ public:
     ~BitStream();
     void writeBit(bool bit);
     bool readBit();
+    void close();
+    bool getEOF();
     void writeBits(uint64_t value, int n);
     uint64_t readBits(int n);
     void writeString(const std::string& str);
@@ -26,6 +28,8 @@ public:
     int getBufferPos();
     int setToWrite(const std::string& filename);
     int setToRead(const std::string& filename);
+    int getValidBitsInLastByte(); // Add this method
+    std::fstream& getFileStream(); // Add this method
 
 private:
     std::fstream file;
