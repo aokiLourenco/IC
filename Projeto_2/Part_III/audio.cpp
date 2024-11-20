@@ -20,6 +20,8 @@ audio_codec::audio_codec(std::string file, std::string output_file) : encoder(ou
     sampleRate = buffer.getSampleRate();
     channelCount = buffer.getChannelCount();
     duration = static_cast<float>(sampleCount) / sampleRate / channelCount;
+    encoder.set_M(256);
+    decoder.set_M(256);
 }
 
 audio_codec::~audio_codec()
