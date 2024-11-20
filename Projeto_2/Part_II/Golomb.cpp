@@ -61,6 +61,7 @@ void EncoderGolomb::encode(int Number) {
     }
     bitStream.writeBit(0);
 
+    // printf("M : %d\n", M);
     // Encode the remainder using binary coding
     if (M % 2 == 0) {
         bitStream.writeBits(r, b);
@@ -71,10 +72,12 @@ void EncoderGolomb::encode(int Number) {
             bitStream.writeBits(r + (1 << b) - M, b + 1);
         }
     }
+    // printf("Buffer Pos : %d\n", bitStream.getBufferPos());
 }
 
 
 void EncoderGolomb::finishEncoding() {
+    bitStream.flushBuffer();
     bitStream.close();
 }
 
@@ -129,14 +132,14 @@ int DecoderGolomb::decode() {
 
     N = q * M + r;
 
-    // Debug print
-    std::cout << "Quotient: " << q << ", Remainder: " << r << ", N: " << N << std::endl;
+    // // Debug print
+    // std::cout << "Quotient: " << q << ", Remainder: " << r << ", N: " << N << std::endl;
 
     if (mode == EncodingMode::SIGN_MAGNITUDE) {
-        std::cout << "Decoded Number (SIGN_MAGNITUDE): " << ((N & 1) ? -(N >> 1) : (N >> 1)) << std::endl;
+        // std::cout << "Decoded Number (SIGN_MAGNITUDE): " << ((N & 1) ? -(N >> 1) : (N >> 1)) << std::endl;
         return (N & 1) ? -(N >> 1) : (N >> 1);
     } else { // INTERLEAVING
-        std::cout << "Decoded Number (INTERLEAVING): " << ((N & 1) ? -(N >> 1) - 1 : (N >> 1)) << std::endl;
+        // std::cout << "Decoded Number (INTERLEAVING): " << ((N & 1) ? -(N >> 1) - 1 : (N >> 1)) << std::endl;
         return (N & 1) ? -(N >> 1) - 1 : (N >> 1);
     }
 }

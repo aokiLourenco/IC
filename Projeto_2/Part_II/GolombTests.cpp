@@ -9,7 +9,7 @@
 using namespace std;
 
 int main() {
-    string inputFilePath = "../Data/input.txt";
+    string inputFilePath = "../Data/Tests.txt";
     cout << "Opening input file: " << inputFilePath << endl;
     ifstream inputFile(inputFilePath);
     if (!inputFile.is_open()) {
@@ -32,11 +32,15 @@ int main() {
     encoder.finishEncoding();
 
     // Step 3: Decode the encoded integers
+
+    printf("Decoding\n");
+
     DecoderGolomb decoder("../Data/output.bin", EncodingMode::SIGN_MAGNITUDE);
     decoder.set_M(3); // Set the value of M
     vector<int> decodedNumbers;
     for (size_t i = 0; i < inputNumbers.size(); ++i) {
         int decodedNumber = decoder.decode();
+        printf("Decoded Number : %d\n", decodedNumber);
         decodedNumbers.push_back(decodedNumber);
     }
 
