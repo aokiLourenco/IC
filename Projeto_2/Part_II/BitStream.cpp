@@ -40,6 +40,7 @@ bool BitStream::readBit() {
 
 uint64_t BitStream::readBits(int n) {
     uint64_t value = 0;
+
     for (int i = 0; i < n; ++i) {
         if (isEndOfStream()) {
             throw std::runtime_error("Attempt to read beyond end of file while reading bits");
@@ -92,6 +93,7 @@ void BitStream::fillBuffer() {
         return;
     }
     buffer = file.get();
+    // printf("Buffer : %d\n", buffer);
     if (file.eof()) {
         bufferPos = 0;
         return;
@@ -100,6 +102,7 @@ void BitStream::fillBuffer() {
 }
 
 bool BitStream::isEndOfStream() {
+    // printf("Buffer Pos on IEFS : %d\n", bufferPos);
     if (bufferPos > 0) {
         return false;
     }
