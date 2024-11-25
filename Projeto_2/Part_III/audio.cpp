@@ -100,23 +100,10 @@ void audio_codec::decode(bool mono)
 {
     // Decode the residual values from the file
     std::vector<int> residual_decoded;
-    if (mono)
+    while (!decoder.getBitStream()->isEndOfStream())
     {
-        while (!decoder.getBitStream()->isEndOfStream())
-        {
-            int decodedNumber = decoder.decode();
-            residual_decoded.push_back(decodedNumber);
-            // printf("Decoded Number : %d\n", decodedNumber);
-        }
-    }
-    else
-    {
-        while (!decoder.getBitStream()->isEndOfStream())
-        {
-            int decodedNumber = decoder.decode();
-            residual_decoded.push_back(decodedNumber);
-            // printf("Decoded Number : %d\n", decodedNumber);
-        }
+        int decodedNumber = decoder.decode();
+        residual_decoded.push_back(decodedNumber);
     }
 
     // Calculate the original samples using the residual values
@@ -143,7 +130,7 @@ void audio_codec::decode(bool mono)
     sound_decoded.play();
     while (sound_decoded.getStatus() == sf::Sound::Playing)
     {
-
+        // Wait until the sound is over
     }
     
 }
