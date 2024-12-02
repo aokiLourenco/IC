@@ -16,13 +16,13 @@ using namespace cv;
 using namespace std;
 
 class IntraDecoder {
-private:\
-    int shift;             ///< Shift for decoding
-    DecoderGolomb &golomb; ///< Golomb decoder for decoding
+private:
+    int shift;             
+    DecoderGolomb* golomb; 
 
 public:
-    IntraDecoder(DecoderGolomb& decoder, int shift = 0);
+    IntraDecoder(DecoderGolomb* decoder, int shift = 0);
     ~IntraDecoder();
     int decode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
 };
-#endif // INTRADECODER_H
+#endif

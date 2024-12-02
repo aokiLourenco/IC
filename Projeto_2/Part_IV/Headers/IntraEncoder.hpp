@@ -17,11 +17,11 @@ using namespace std;
 
 class IntraEncoder {
 private:
-    int shift;             ///< Shift for decoding
-    EncoderGolomb &golomb; ///< Golomb Encoder for decoding
+    int shift;  
+    EncoderGolomb* golomb; 
 
 public:
-    IntraEncoder(EncoderGolomb& encoder, int shift = 0);
+    IntraEncoder(EncoderGolomb* encoder, int shift = 0);
     ~IntraEncoder();
     int encode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
 };
