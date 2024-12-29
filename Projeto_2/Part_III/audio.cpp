@@ -4,6 +4,15 @@
 
 #include "./Headers/audio.hpp"
 
+
+/**
+ * Constructor for the audio_codec class
+ * Open the file, load the samples and calculate the basic information about the audio file
+ * Set the M value for the encoder and decoder
+ * @param file: path to the audio file
+ * @param output_file: path to the output file
+ * @return audio_codec object
+ */
 audio_codec::audio_codec(std::string file, std::string output_file) : encoder(output_file, EncodingMode::SIGN_MAGNITUDE), decoder(output_file, EncodingMode::SIGN_MAGNITUDE)
 {
     // Open file and extract basic information
@@ -20,8 +29,8 @@ audio_codec::audio_codec(std::string file, std::string output_file) : encoder(ou
     sampleRate = buffer.getSampleRate();
     channelCount = buffer.getChannelCount();
     duration = static_cast<float>(sampleCount) / sampleRate / channelCount;
-    encoder.set_M(256);
-    decoder.set_M(256);
+    encoder.set_M(128);
+    decoder.set_M(128);
 }
 
 audio_codec::~audio_codec()
@@ -29,6 +38,13 @@ audio_codec::~audio_codec()
     std::cout << "Destroying audio_codec object" << std::endl;
 }
 
+/**
+ *  Calculate the residual signal using the simple formula: residual[i] = samples[i] - samples[i - 1]
+ * @param samples: vector with the samples of the audio file
+ * @param sampleCount: number of samples in the audio file
+ * @return vector with the residual values
+ * 
+ */
 std::vector<int> audio_codec::simple_diference(std::vector<double> samples, std::size_t sampleCount)
 {
     // Calculate the residual signal using the simple formula: residual[i] = samples[i] - samples[i - 1]
@@ -40,6 +56,10 @@ std::vector<int> audio_codec::simple_diference(std::vector<double> samples, std:
     return residual;
 }
 
+/**
+ * Encode the audio file when it's mono
+ * Calculate the residual values for the samples and store it in a file
+ */
 void audio_codec::encode_mono()
 {
     // Calculate the residual values for the samples
@@ -57,26 +77,34 @@ void audio_codec::encode_mono()
     }
 }
 
-void audio_codec::encode_stereo()
+/**
+ * Encode the audio file when it's stereo
+ * Calculate the residual values for the samples of each channel and store it in a file
+ */
+void audio_codec::encode_stereo_with_inter_channel()
 {
-    //! To change: Could use values from the other channel to calculate one, that way it's more efficient
-
-    std::vector<double> leftChannel(sampleCount / 2);
-    std::vector<double> rightChannel(sampleCount / 2);
-    for (std::size_t i = 0; i < sampleCount / 2; ++i)
+    std::vector<int> residual;
+    // Calculate the residual values for the samples
+    for(std::size_t i = 0; i<sampleCount; i++)
     {
-        leftChannel[i] = static_cast<double>(samples[2 * i]);      // Left channel sample
-        rightChannel[i] = static_cast<double>(samples[2 * i + 1]); // Right channel sample
+        // Left / Right / Left / Right
+        // I / I+1 - I / I+2 - I / I + 3 - I + 1 / I + 4 - I +2
+        if(i == 0){
+            residual.push_back(samples[i]);
+        }
+        else if(i%2 != 0){
+            residual.push_back(samples[i] - samples[i-1]);
+        }else{
+            residual.push_back(samples[i] - samples[i-2]);
+        }
     }
-    std::vector<int> residual_left = simple_diference(leftChannel, sampleCount / 2);
-    std::vector<int> residual_right = simple_diference(rightChannel, sampleCount / 2);
 
-    // Encode the residual values and store it in a file
-    for(size_t i = 0; i<residual_left.size(); i++)
+    for (int number : residual)
     {
-        encoder.encode(residual_left[i]);
-        encoder.encode(residual_right[i]);
+        // printf("Number : %d\n", number);
+        encoder.encode(number);
     }
+
 }
 
 void audio_codec::encode()
@@ -92,7 +120,7 @@ void audio_codec::encode()
     else
     {
         // If stereo, calculate the residual values for the samples of each channel
-        encode_stereo();
+        encode_stereo_with_inter_channel();
     }
 }
 
@@ -100,18 +128,23 @@ void audio_codec::decode(bool mono)
 {
     // Decode the residual values from the file
     std::vector<int> residual_decoded;
+
     while (!decoder.getBitStream()->isEndOfStream())
-    {
+    {   
         int decodedNumber = decoder.decode();
         residual_decoded.push_back(decodedNumber);
     }
 
     // Calculate the original samples using the residual values
     std::vector<double> samples_decoded(sampleCount);
-    samples_decoded[0] = first_sample;
+    samples_decoded[0] = residual_decoded[0];
     for (std::size_t i = 1; i < sampleCount; ++i)
     {
-        samples_decoded[i] = samples_decoded[i - 1] + residual_decoded[i - 1];
+        if(i%2 != 0){
+            samples_decoded[i] = samples_decoded[i - 1] + residual_decoded[i];
+        }else{
+            samples_decoded[i] = samples_decoded[i - 2] + residual_decoded[i];
+        }
     }
 
     // Create a new audio buffer with the decoded samples
