@@ -28,7 +28,5 @@ float InterEncoder::cost(Mat block)
 int InterEncoder::encode(Mat &old_Frame, Mat &new_Frame) 
 {
     Mat min_frame_diff, frame_diff, aux_frame;
-
-    
     
 } 

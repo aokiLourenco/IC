@@ -18,10 +18,10 @@ using namespace std;
 class IntraDecoder {
 private:
     int shift;             
-    DecoderGolomb* golomb; 
+    DecoderGolomb &golomb; 
 
 public:
-    IntraDecoder(DecoderGolomb* decoder, int shift = 0);
+    IntraDecoder(DecoderGolomb &decoder, int shift = 0);
     ~IntraDecoder();
     int decode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
 };

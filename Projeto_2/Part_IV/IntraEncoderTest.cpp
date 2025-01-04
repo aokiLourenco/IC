@@ -1,46 +1,137 @@
-#include <vector>
-#include <stdexcept>
-#include <cstdint>
 #include <iostream>
-#include <opencv2/opencv.hpp>
-#include "./Headers/BitStream.hpp"
-#include "./Headers/IntraEncoder.hpp"
-#include "./Headers/IntraDecoder.hpp"
-#include "./Headers/Predictor.hpp"
+#include "opencv2/opencv.hpp"
+#include "BitStream.hpp"
+#include "IntraEncoder.hpp"
+#include "./Predictor.hpp"
+#include <chrono>
+#include <iomanip>
+#include <iterator>
+#include "./Converter.hpp"
 
-using namespace cv;
-using namespace std;
+int main(int argc, char const *argv[]) {
+    Converter conv;
+    vector<function<int(int, int, int)>> predictors = GetPredictors();
+    
+    cout << "Enter the name of the file to save to (absolute path): ";
+    string output;
+    cin >> output;
 
-int main(int argc, char const *argv[]) 
-{
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_image>" << std::endl;
+    cout << "Enter the name of the file to read from (absolute path): ";
+    string input;
+    cin >> input;
+
+    // Read format from file header
+    ifstream file(input, ios::binary);
+    string file_header;
+    getline(file, file_header);
+    file.close();
+
+    istringstream iss(file_header);
+    vector<string> tokens{istream_iterator<string>{iss},
+                         istream_iterator<string>{}};
+
+    // Determine format
+    int format;
+    if (tokens.size() > 6) {
+        if (tokens[6].compare("C444") == 0) format = 0;
+        else if (tokens[6].compare("C422") == 0) format = 1;
+        else format = 2;
+    } else {
+        format = 2;
+    }
+    cout << "Format: " << format << endl;
+
+    // Count total frames
+    VideoCapture frame_counter(input);
+    if (!frame_counter.isOpened()) {
+        cout << "Error opening video for frame counting" << endl;
         return -1;
     }
 
-    std::string input_image_path = argv[1];
-    std::string encoded_file_path = "../Data/encoded_file.dat";
+    Mat temp_frame;
+    int num_frames = 0;
+    while (frame_counter.read(temp_frame)) {
+        num_frames++;
+    }
+    frame_counter.release();
+    cout << "Total frames counted: " << num_frames << endl;
 
-    // Load the input image
-    Mat image = imread(input_image_path, IMREAD_GRAYSCALE);
-    if (image.empty()) {
-        std::cerr << "Could not open or find the image!" << std::endl;
+    // Open video for processing
+    VideoCapture cap(input);
+    if (!cap.isOpened()) {
+        cout << "Error opening video for processing" << endl;
         return -1;
     }
 
-    // Encode the image
-    Predictor predictor;
-    predictor.encode(image, encoded_file_path);
+    // Initialize encoder
+    int shift = 0;
+    int predictor = 0;
+    EncoderGolomb encoder(output, EncodingMode::SIGN_MAGNITUDE);
+    IntraEncoder intra_encoder(encoder, shift);
 
-    // Load the encoded file to verify encoding
-    std::ifstream encoded_file(encoded_file_path, std::ios::binary);
-    if (!encoded_file.is_open()) {
-        std::cerr << "Could not open the encoded file!" << std::endl;
-        return -1;
+    // Write header information
+    encoder.encode(format);
+    encoder.encode(predictor);
+    encoder.encode(shift);
+    encoder.encode(num_frames);
+
+    // Process frames
+    Mat frame;
+    int count = 0;
+    switch (format) {
+        case 0: {
+            while (true) {
+                cap >> frame;
+                if (frame.empty()) break;
+                
+                frame = conv.rgb_to_yuv444(frame);
+                if (count == 0) {
+                    encoder.encode(frame.cols);
+                    encoder.encode(frame.rows);
+                }
+                intra_encoder.encode(frame, predictors[predictor]);
+                count++;
+                cout << "\rProcessing frame " << count << "/" << num_frames 
+                     << " (" << (count * 100.0 / num_frames) << "%)" << flush;
+            }
+            break;
+        }
+        case 1: {
+            while (true) {
+                cap >> frame;
+                if (frame.empty()) break;
+                
+                frame = conv.rgb_to_yuv422(frame);
+                if (count == 0) {
+                    encoder.encode(frame.cols);
+                    encoder.encode(frame.rows);
+                }
+                intra_encoder.encode(frame, predictors[predictor]);
+                count++;
+                cout << "\rProcessing frame " << count << "/" << num_frames 
+                     << " (" << (count * 100.0 / num_frames) << "%)" << flush;
+            }
+            break;
+        }
+        case 2: {
+            while (true) {
+                cap >> frame;
+                if (frame.empty()) break;
+                
+                frame = conv.rgb_to_yuv420(frame);
+                if (count == 0) {
+                    encoder.encode(frame.cols);
+                    encoder.encode(frame.rows);
+                }
+                intra_encoder.encode(frame, predictors[predictor]);
+                count++;
+                cout << "\rProcessing frame " << count << "/" << num_frames 
+                     << " (" << (count * 100.0 / num_frames) << "%)" << flush;
+            }
+            break;
+        }
     }
-
-    // Display success message
-    std::cout << "Image successfully encoded to " << encoded_file_path << std::endl;
-
+    cout << endl << "Encoding complete!" << endl;
+    encoder.finishEncoding();
     return 0;
 }

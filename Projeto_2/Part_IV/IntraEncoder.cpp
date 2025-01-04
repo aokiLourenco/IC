@@ -6,7 +6,7 @@
 #include "./IntraEncoder.hpp"
 #include "./Headers/Golomb.hpp"
 
-IntraEncoder::IntraEncoder(EncoderGolomb* encoder, int shift) : golomb(encoder), shift(shift) 
+IntraEncoder::IntraEncoder(EncoderGolomb &encoder, int shift) : golomb(encoder), shift(shift) 
 {
 }
 
@@ -14,145 +14,88 @@ IntraEncoder::~IntraEncoder()
 {
 }
 
-int IntraEncoder::encode(Mat &old_frame, function<int(int, int, int)> reconstruct_image) 
+int IntraEncoder::encode(Mat &frame, function<int(int, int, int)> predictor)
 {
-    int x, y, w, error, predicted, M, framecost = 0, size, numnum;
-    Mat image, error_of_Mat;
+    int a, b, c, err, pred, channels, mEnc, framecost, n_ch, size;
+    Mat image, errorMat;
 
-    numnum = old_frame.channels();
-    size = old_frame.rows * old_frame.cols * numnum;
-    
-    if (numnum == 3) 
+    n_ch = frame.channels();
+    size = frame.rows * frame.cols * n_ch;
+
+    // these are concatenating a row of zeros to the upwards and left side of the array;
+    if (n_ch == 3)
     {
-        copyMakeBorder(old_frame, image, 1, 0, 1, 0, BORDER_CONSTANT, Scalar::all(0));
-        error_of_Mat = Mat::zeros(old_frame.size(), CV_16SC3);
+        hconcat(Mat::zeros(frame.rows, 1, CV_8UC3), frame, image);
+        vconcat(Mat::zeros(1, frame.cols + 1, CV_8UC3), image, image);
+        errorMat = Mat::zeros(frame.rows, frame.cols, CV_16SC3);
     }
-    else if (numnum == 1) 
+    else if (n_ch == 1)
     {
-        copyMakeBorder(old_frame, image, 1, 0, 1, 0, BORDER_CONSTANT, Scalar::all(0));
-        error_of_Mat = Mat::zeros(old_frame.size(), CV_16SC1);
+        hconcat(Mat::zeros(frame.rows, 1, CV_8UC1), frame, image);
+        vconcat(Mat::zeros(1, frame.cols + 1, CV_8UC1), image, image);
+        errorMat = Mat::zeros(frame.rows, frame.cols, CV_16SC1);
     }
-    else 
+    else
     {
         cout << "Error: Invalid number of channels" << endl;
-        return -1;
+        exit(1);
     }
 
-    for(int i = 1; i < image.rows; i++) 
+    for (int i = 1; i < image.rows; i++)
     {
-        for(int j = 1; j < image.cols; j++)
+        for (int n = 1; n < image.cols; n++)
         {
-            if (numnum == 1) // Grayscale image
+            for (int ch = 0; ch < n_ch; ch++)
             {
-                x = image.at<uchar>(i, j - 1);
-                y = image.at<uchar>(i - 1, j);
-                w = image.at<uchar>(i - 1, j - 1);
+                a = image.ptr<uchar>(i, n - 1)[ch];
 
-                uchar current_pixel = image.at<uchar>(i, j);
+                b = image.ptr<uchar>(i - 1, n)[ch];
 
-                predicted = reconstruct_image(x, y, w);
-                error = current_pixel - predicted;
+                c = image.ptr<uchar>(i - 1, n - 1)[ch];
 
-                if(error < 0)
+                pred = predictor(a, b, c);
+                err = image.ptr<uchar>(i, n)[ch] - pred;
+
+                if (err < 0)
                 {
-                    error = -1 * (abs(error) >> shift);
-                }
-                else 
-                {
-                    error = error >> shift;
-                }
-
-                error_of_Mat.at<short>(i - 1, j - 1) = error;
-
-                if(error < 0)
-                {
-                    error = -1 * (abs(error) << shift);
+                    err = -1 * (abs(err) >> shift);
                 }
                 else
                 {
-                    error <<= shift;
+                    err >>= shift;
                 }
-                image.at<uchar>(i, j) = static_cast<uchar>(predicted + error);
-            }
-            else if (numnum == 3) // Color image
-            {
-                Vec3b x_pixel = image.at<Vec3b>(i, j - 1);
-                Vec3b y_pixel = image.at<Vec3b>(i - 1, j);
-                Vec3b w_pixel = image.at<Vec3b>(i - 1, j - 1);
-                Vec3b current_pixel = image.at<Vec3b>(i, j);
+                // Store Error = estimate - real value.
+                errorMat.ptr<short>(i - 1, n - 1)[ch] = err;
 
-                for (int n = 0; n < 3; n++)
-                {
-                    x = x_pixel[n];
-                    y = y_pixel[n];
-                    w = w_pixel[n];
-
-                    predicted = reconstruct_image(x, y, w);
-                    error = current_pixel[n] - predicted;
-
-                    if(error < 0)
-                    {
-                        error = -1 * (abs(error) >> shift);
-                    }
-                    else 
-                    {
-                        error = error >> shift;
-                    }
-
-                    error_of_Mat.at<Vec3s>(i - 1, j - 1)[n] = static_cast<short>(error);
-
-                    if(error < 0)
-                    {
-                        error = -1 * (abs(error) << shift);
-                    }
-                    else
-                    {
-                        error <<= shift;
-                    }
-                    image.at<Vec3b>(i, j)[n] = static_cast<uchar>(predicted + error);
-                }
+                if (err < 0)
+                    err = -1 * (abs(err) << shift);
+                else
+                    err <<= shift;
+                image.ptr<uchar>(i, n)[ch] = (unsigned char)pred + err;
             }
         }
     }
 
-    M = golomb->optimal_m(error_of_Mat);
-    printf("M: %d\n", M);
-    if(golomb->get_M() == M) 
+    mEnc = golomb.optimal_m(errorMat);
+    if (golomb.get_M() == mEnc)
     {
-        golomb->encode(1);
+        golomb.encode(0);
     }
-    else 
+    else
     {
-        golomb->encode(0);
-        golomb->encode(M);
-        golomb->set_M(M);
+        golomb.encode(mEnc);
+        golomb.set_M(mEnc);
     }
 
-    int channels = error_of_Mat.channels();
-    for (int i = 0; i < error_of_Mat.rows; i++)
-    {
-        for (int j = 0; j < error_of_Mat.cols; j++)
-        {
-            if (channels == 1)
+    for (int i = 0; i < errorMat.rows; i++)
+        for (int n = 0; n < errorMat.cols; n++)
+            for (int ch = 0; ch < n_ch; ch++)
             {
-                short value = error_of_Mat.at<short>(i, j);
-                framecost += abs(value);
-                golomb->encode(value);
+                framecost += abs(errorMat.ptr<short>(i, n)[ch]);
+                golomb.encode(errorMat.ptr<short>(i, n)[ch]);
             }
-            else if (channels == 3)
-            {
-                Vec<short, 3> pixel = error_of_Mat.at<Vec<short, 3>>(i, j);
-                for (int n = 0; n < 3; n++)
-                {
-                    short value = pixel[n];
-                    framecost += abs(value);
-                    golomb->encode(value);
-                }
-            }
-        }
-    }
 
-    golomb->finishEncoding(); // Ensure the encoding is properly finalized
+    int errorW, errorH, imageW, imageH;
 
     return framecost / size;
 }
