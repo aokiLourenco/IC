@@ -21,8 +21,12 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 add_executable(predictor PredictorTest.cpp Predictor.cpp Golomb.cpp BitStream.cpp)
 
 # Add executable for IntraTester
-add_executable(intra_tester IntraTester.cpp BitStream.cpp IntraEncoder.cpp IntraDecoder.cpp Predictor.cpp Golomb.cpp)
+add_executable(intra_Decoder_tester IntraDecoderTest.cpp BitStream.cpp IntraDecoder.cpp Predictor.cpp Golomb.cpp Converter.cpp)
+
+add_executable(intra_Encoder_tester IntraEncoderTest.cpp BitStream.cpp IntraEncoder.cpp Predictor.cpp Golomb.cpp Converter.cpp)
+
 
 # Link OpenCV and SFML libraries
 target_link_libraries(predictor ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
-target_link_libraries(intra_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+target_link_libraries(intra_Decoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+target_link_libraries(intra_Encoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)

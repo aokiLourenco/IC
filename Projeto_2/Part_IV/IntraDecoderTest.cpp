@@ -1,38 +1,99 @@
-#include <vector>
-#include <stdexcept>
-#include <cstdint>
 #include <iostream>
-#include <opencv2/opencv.hpp>
-#include "./Headers/BitStream.hpp"
-#include "./Headers/IntraEncoder.hpp"
-#include "./Headers/IntraDecoder.hpp"
-#include "./Headers/Predictor.hpp"
-#include "./Headers/Golomb.hpp"
+#include "opencv2/opencv.hpp"
+#include "./BitStream.hpp"
+#include "./IntraDecoder.hpp"
+#include "./Predictor.hpp"
+#include "./Converter.hpp"
 
-using namespace cv;
-using namespace std;
-
-int main(int argc, char const *argv[]) 
+int main(int argc, char const *argv[])
 {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <encoded_file>" << std::endl;
-        return -1;
+    Converter conv;
+    vector<function<int(int, int, int)>> predictors = GetPredictors();
+
+    cout << "Enter the name of the file to read (absolute path): ";
+
+    string input;
+
+    cin >> input;
+
+    DecoderGolomb decoder(input, EncodingMode::SIGN_MAGNITUDE);
+
+    int format = decoder.decode();
+    int predictor = decoder.decode();
+    int shift = decoder.decode();
+    int n_frames = decoder.decode();
+    int width = decoder.decode();
+    int height = decoder.decode();
+
+    cout << "Format: " << format << endl;
+    cout << "Predictor: " << predictor << endl;
+    cout << "Shift: " << shift << endl;
+    cout << "Number of frames: " << n_frames << endl;
+    cout << "Width: " << width << endl;
+    cout << "Height: " << height << endl;
+
+    Mat frame;
+
+    IntraDecoder intra_decoder(decoder, shift);
+
+    switch (format)
+    {
+    case 0:
+    {
+        while (n_frames > 0)
+        {
+            frame = Mat::zeros(height, width, CV_8UC3);
+            intra_decoder.decode(frame, predictors[predictor]);
+
+            imshow("Image", conv.yuv444_to_rgb(frame));
+            if (waitKey(10) == 27)
+            {
+                destroyAllWindows();
+            }; 
+
+            cout << "Decoded frame " << n_frames-- << endl;
+        }
+        break;
     }
+    case 1:
+    {
+        while (n_frames > 0)
+        {
+            frame = Mat::zeros(height, width, CV_8UC1);
+            intra_decoder.decode(frame, predictors[predictor]);
 
-    std::string encoded_file_path = argv[1];
+            imshow("Image", conv.yuv422_to_rgb(frame));
+            if (waitKey(10) == 27)
+            {
+                destroyAllWindows();
+            };
 
-    // Decode the image
-    Predictor predictor;
-    Mat decoded_image = predictor.decode(encoded_file_path);
+            cout << "Decoded frame " << n_frames-- << endl;
+        }
+        break;
+    }
+    case 2:
+    {
+        while (n_frames > 0)
+        {
+            frame = Mat::zeros(height, width, CV_8UC1);
+            intra_decoder.decode(frame, predictors[predictor]);
 
-    // Save the decoded image
-    imwrite("decoded.png", decoded_image);
+            if (frame.empty()) {
+                std::cout << "Decoded frame is empty." << std::endl;
+                n_frames--;
+                continue;
+            }
 
-    // Display the decoded image
-    namedWindow("Decoded Image", WINDOW_AUTOSIZE);
-    imshow("Decoded Image", decoded_image);
+            imshow("Image", conv.yuv420_to_rgb(frame));
+            if (waitKey(10) == 27)
+            {
+                destroyAllWindows();
+            }; 
 
-    waitKey(0);
-
-    return 0;
+            cout << "Decoded frame " << n_frames-- << endl;
+        }
+        break;
+    }
+    }
 }
