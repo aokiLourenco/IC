@@ -13,6 +13,9 @@ private:
     std::string output;
     sf::SoundBuffer buffer;
 
+    // Dinamic M
+    bool dynamic_M = false;
+
     // Basic information about the audio file
     const sf::Int16 *samples;
     double first_sample;
@@ -46,7 +49,7 @@ private:
 public:
     EncoderGolomb encoder;
     DecoderGolomb decoder;
-    audio_codec(std::string file, std::string output_file);
+    audio_codec(std::string file, std::string output_file, int M);
     ~audio_codec();
     void encode();
     std::vector<int> simple_diference(std::vector<double> samples, std::size_t sampleCount);
@@ -54,5 +57,5 @@ public:
     
     void encode_mono();
     void encode_stereo_with_inter_channel();
-    void decode(bool mono);
+    void decode();
 };

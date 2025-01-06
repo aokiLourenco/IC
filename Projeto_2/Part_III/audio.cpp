@@ -15,7 +15,7 @@
  * @param output_file: path to the output file
  * @return audio_codec object
  */
-audio_codec::audio_codec(std::string file, std::string output_file) : encoder(output_file, EncodingMode::SIGN_MAGNITUDE), decoder(output_file, EncodingMode::SIGN_MAGNITUDE)
+audio_codec::audio_codec(std::string file, std::string output_file, int M) : encoder(output_file, EncodingMode::SIGN_MAGNITUDE), decoder(output_file, EncodingMode::SIGN_MAGNITUDE)
 {
     // Open file and extract basic information
     filename = file;
@@ -26,13 +26,17 @@ audio_codec::audio_codec(std::string file, std::string output_file) : encoder(ou
         return;
     }
     samples = buffer.getSamples();
-    first_sample = static_cast<double>(samples[0]);
     sampleCount = buffer.getSampleCount();
     sampleRate = buffer.getSampleRate();
     channelCount = buffer.getChannelCount();
     duration = static_cast<float>(sampleCount) / sampleRate / channelCount;
-    encoder.set_M(128);
-    decoder.set_M(128);
+    if(M!=0){
+        dynamic_M = false;
+        encoder.set_M(M);
+        decoder.set_M(M);
+
+    }
+    dynamic_M = true;
 }
 
 audio_codec::~audio_codec()
@@ -83,11 +87,35 @@ void audio_codec::encode_mono()
     }
     std::vector<int> residual = simple_diference(Channel, sampleCount);
 
-    // Encode the residual values and store it in a file
-    for (int number : residual)
+    std::vector<int> residuals;
+
+    std::cout << "Total encoded residuals: " << residual.size() << std::endl;
+    for (int i = 0; i < residual.size(); i++)
     {
-        encoder.encode(number);
+
+        if (dynamic_M && i % 512 == 0)
+        {
+            int m = calculate_optimal_m(residuals);
+            residuals.clear();
+            encoder.set_M(m);
+        }
+
+        encoder.encode(residual[i]);
     }
+
+    std::ofstream file;
+    file.open("../Data/samples", std::ios::app);
+    for (int i = 0; i < sampleCount; i++)
+    {
+        file << samples[i] << std::endl;
+    }
+    file.close();
+    encoder.encode(13102003); // End of file
+    // Encode the things refering to the audio
+    encoder.encode(channelCount);
+    encoder.encode(sampleRate);
+    encoder.encode(sampleCount);
+    encoder.finishEncoding();
 }
 
 /**
@@ -109,21 +137,37 @@ void audio_codec::encode_stereo_with_inter_channel()
     std::vector<int> residual1 = simple_diference(Channel1, Channel1.size());
     std::vector<int> residual2 = inter_diference(Channel1, Channel2, Channel1.size());
 
+    std::vector<int> residuals;
+
     std::cout << "Total encoded residuals: " << residual1.size() * 2 << std::endl; // Two residuals per sample (inter-channel and intra-channel).
     for (int i = 0; i < residual1.size(); i++)
     {
+
+        if ( dynamic_M && i % 256 == 0)
+        {
+            int m = calculate_optimal_m(residuals);
+            residuals.clear();
+            encoder.set_M(m);
+        }
+
         encoder.encode(residual1[i]);
+        residuals.push_back(residual1[i]);
         encoder.encode(residual2[i]);
+        residuals.push_back(residual2[i]);
     }
 
-    std::ofstream file;
-    file.open("../Data/samples", std::ios::app);
-    for (int i = 0; i < sampleCount; i++)
-    {
-        file << samples[i] << std::endl;
-    }
-    file.close();
+    // std::ofstream file;
+    // file.open("../Data/samples", std::ios::app);
+    // for (int i = 0; i < sampleCount; i++)
+    // {
+    //     file << samples[i] << std::endl;
+    // }
+    // file.close();
     encoder.encode(13102003); // End of file
+    // Encode the things refering to the audio
+    encoder.encode(channelCount);
+    encoder.encode(sampleRate);
+    encoder.encode(sampleCount);
     encoder.finishEncoding();
 }
 
@@ -144,23 +188,38 @@ void audio_codec::encode()
     }
 }
 
-void audio_codec::decode(bool mono)
+void audio_codec::decode()
 {
     // Decode the residual values from the file
     std::vector<int> residual_decoded;
+    std::vector<int> residuals;
+
     // std::vector<int> residuals1;
     // std::vector<int> residuals2;
-    std::ofstream file;
-    file.open("../Data/samples_decoded", std::ios::app);
-    // int cen = 0;
+    // std::ofstream file;
+    // file.open("../Data/samples_decoded", std::ios::app);
+    int cen = 0;
     while (!decoder.getBitStream()->isEndOfStream())
     {
+
+        if (dynamic_M && cen % 512 == 0)
+        {
+            int m = calculate_optimal_m(residuals);
+            residuals.clear();
+            decoder.set_M(m);
+        }
+
         int decodedNumber = decoder.decode();
         if (decodedNumber == 13102003)
         {
+            channelCount = decoder.decode();
+            sampleRate = decoder.decode();
+            sampleCount = decoder.decode();
             break;
         }
         residual_decoded.push_back(decodedNumber);
+        residuals.push_back(decodedNumber);
+        cen++;
     }
 
     // file.close();
@@ -171,18 +230,29 @@ void audio_codec::decode(bool mono)
     std::vector<double> samples_decoded(sampleCount);
     printf("Residual decoder 0 : %d\n", residual_decoded[0]);
     samples_decoded[0] = residual_decoded[0];
-    for (std::size_t i = 1; i < sampleCount; ++i)
+
+    if (channelCount == 1)
     {
-        if (i % 2 != 0)
+        for (std::size_t i = 1; i < sampleCount; ++i)
         {
-            samples_decoded[i] = samples_decoded[i - 1] - residual_decoded[i];
-        }
-        else
-        {
-            samples_decoded[i] = samples_decoded[i - 2] + residual_decoded[i];
+            samples_decoded[i] = samples_decoded[i - 1] + residual_decoded[i];
         }
     }
+    else
+    {
 
+        for (std::size_t i = 1; i < sampleCount; ++i)
+        {
+            if (i % 2 != 0)
+            {
+                samples_decoded[i] = samples_decoded[i - 1] - residual_decoded[i];
+            }
+            else
+            {
+                samples_decoded[i] = samples_decoded[i - 2] + residual_decoded[i];
+            }
+        }
+    }
     // Create a new audio buffer with the decoded samples
     sf::SoundBuffer buffer_decoded;
 
@@ -193,27 +263,42 @@ void audio_codec::decode(bool mono)
         samples_decoded_int16[i] = static_cast<sf::Int16>(samples_decoded[i]);
     }
 
-    for (int i = 0; i < samples_decoded_int16.size(); i++)
-    {
-        file << samples_decoded_int16[i] << std::endl;
-    }
-    file.close();
+    // for (int i = 0; i < samples_decoded_int16.size(); i++)
+    // {
+    //     file << samples_decoded_int16[i] << std::endl;
+    // }
+    // file.close();
 
     buffer_decoded.loadFromSamples(&samples_decoded_int16[0], sampleCount, channelCount, sampleRate);
 
     // Save the decoded samples to a new audio file
     buffer_decoded.saveToFile("../Data/output_decoded.wav");
-    std::cout << "Decoded audio file saved" << std::endl;
+    std::cout << "Decoded audio file saved in /Data/output_decoded.wav" << std::endl;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 
-    audio_codec audio("../Data/test.wav", "../Data/output.bin");
+    //Args : input file, output file, M
+
+    if(argc < 3){
+        printf("Usage: %s <input_file> <output_file> <M>(optional)\n", argv[0]);
+        return 1;
+    }
+
+    std::string input_file = argv[1];
+    std::string output_file = argv[2];
+    int M = 0;
+    if(argc == 4){
+        int M = pow(2,ceil(log2(atoi(argv[3]))));
+    }
+
+
+    audio_codec audio(input_file, output_file, M);
     printf("Encoding\n");
     audio.encode();
     printf("Decoding\n");
-    audio.decode(true);
+    audio.decode();
 
     return 0;
 }
