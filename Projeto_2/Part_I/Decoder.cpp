@@ -64,8 +64,107 @@ void Decoder::decode() {
     std::cout << "Decoding completed." << std::endl;
 }
 
+void runTestCase1() {
+    BitStream bitStream("test.bin", true);
+    std::string writeSequence = "10101010";
+    for(char bit : writeSequence) {
+        bitStream.writeBit(bit == '1');
+    }
+
+    BitStream readStream("test.bin", false);
+    std::string readSequence;
+    while (!readStream.isEndOfStream()) {
+        bool bit = readStream.readBit();
+        readSequence += bit ? '1' : '0';
+    }
+
+    if(writeSequence == readSequence) {
+        std::cout << "Test Case 1 Passed" << std::endl;
+    } else {
+        std::cout << "Test Case 1 Failed" << std::endl;
+    }
+}
+
+void runTestCase2() {
+    BitStream bitStream("test_multiple_bits.bin", true);
+    
+    std::vector<std::pair<uint32_t, int>> testValues = {
+        {0xF, 4},    // 4 bits
+        {0xAA, 8},   // 8 bits
+        {0x1234, 16} // 16 bits
+    };
+    
+    for(const auto& [value, bitLength] : testValues) {
+        bitStream.writeBits(value, bitLength);
+    }
+    bitStream.flushBuffer();
+    bitStream.close();
+    
+
+    // Read bits back from the file
+    BitStream readStream("test_multiple_bits.bin", false);
+    std::vector<std::pair<uint32_t, int>> readValues;
+    try {
+        for(const auto& [value, bitLength] : testValues) {
+            uint32_t readValue = readStream.readBits(bitLength);
+            readValues.emplace_back(readValue, bitLength);
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error during reading bits: " << e.what() << std::endl;
+    }
+    readStream.close();
+
+    bool passed = (testValues.size() == readValues.size());
+    if(passed) {
+        for(size_t i = 0; i < testValues.size(); ++i) {
+            if(testValues[i].first != readValues[i].first || testValues[i].second != readValues[i].second) {
+                passed = false;
+                break;
+            }
+        }
+    }
+
+    std::cout << "Test Case 2 " << (passed ? "Passed" : "Failed") << std::endl;
+}
+
+void runTestCase3() {
+    BitStream bitStream("test_error_handling.bin", true);
+    
+    std::string writeSequence = "1101"; // Writing 4 bits
+    for(char bit : writeSequence) {
+        bitStream.writeBit(bit == '1');
+    }
+    bitStream.flushBuffer();
+    bitStream.close();
+
+    // Attempt to read 9 bits (5 more than written)
+    BitStream readStream("test_error_handling.bin", false);
+    try {
+        for(int i = 0; i < 9; ++i) {
+            bool bit = readStream.readBit();
+            std::cout << "Reading bit: " << bit << std::endl;
+        }
+        std::cout << "Test Case 3 Failed: No exception thrown when reading beyond EOF" << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cout << "Test Case 3 Passed: " << e.what() << std::endl;
+    }
+    readStream.close();
+}
+
 int main() {
-    Decoder decoder("output.bin", "output.txt");
+    // runTestCase1();
+    // runTestCase2();
+    // runTestCase3();
+    
+    std::cout << "Enter the name of the file to save to (txt)(absolute path): ";
+    std::string output;
+    std::cin >> output;
+
+    std::cout << "Enter the name of the file to read from (bin)(absolute path): ";
+    std::string input;
+    std::cin >> input;
+
+    Decoder decoder(input, output);
     decoder.decode();
     return 0;
 }

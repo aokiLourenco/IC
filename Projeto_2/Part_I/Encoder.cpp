@@ -47,7 +47,16 @@ void Encoder::encode() {
 }
 
 int main() {
-    Encoder Encoder("../Data/Fake_Binary.txt", "output.bin");
+
+    std::cout << "Enter the name of the file to save to (txt)(absolute path): ";
+    std::string output;
+    std::cin >> output;
+
+    std::cout << "Enter the name of the file to read from (bin)(absolute path): ";
+    std::string input;
+    std::cin >> input;
+
+    Encoder Encoder(input, output);
     Encoder.encode();
     return 0;
 }

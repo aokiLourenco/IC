@@ -1,0 +1,429 @@
+\documentclass[11pt,twoside,a4paper]{report}
+\usepackage[DETI,newLogo]{uaThesis}
+\usepackage{listings}
+\usepackage[english]{babel}
+
+\def\ThesisYear{2024}
+
+% optional packages
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{subcaption}  % For subfigures with captions
+\usepackage[top=2cm, bottom=2cm, outer=0cm, inner=0cm, margin=1in]{geometry}
+\usepackage[pages=some]{background}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyphenat}
+\usepackage{multirow}
+\usepackage{verbatim}
+\usepackage{titlesec}
+\usepackage{biblatex}
+\usepackage{tocloft}
+\usepackage[printonlyused]{acro}
+
+\addbibresource{mybib.bib}
+
+\makeatletter
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\z@}%
+  {-3.25ex \@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\normalsize}}
+\makeatother
+
+\definecolor{codeorange}{rgb}{1,0.02,0}
+\definecolor{codeblue}{rgb}{0,0.5,0.95}
+\definecolor{codegray}{rgb}{0.25,0.25,0.25}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1,1,1}
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{pink}{rgb}{1,0,0.8}
+
+
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codeblue},
+    keywordstyle=\color{codeorange},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+
+\begin{document}
+\pagenumbering{roman}
+
+\newpage
+\backgroundsetup{
+scale=1.1,
+color=white,
+opacity=0.9,
+angle=0,
+contents={\includegraphics{images/background.jpg}}
+}
+\BgThispage
+
+\title{%
+{\LARGE\textit{\\Project\#02}} 
+{ \LARGE \textbf{\\Authors}}
+}
+
+\def\titulo{Information and Coding - Project\#02}
+
+\def\data{January 9, 2025}
+
+\def\autores{%
+    Anderson Lourenço - 108579\\
+    aaokilourenco@ua.pt\\
+    \\ António Almeida - 108250\\
+    ant.almeida@ua.pt\\
+    \\ Tomás Laranjo - 107542\\
+    tomas.laranjo@ua.pt\\ %
+}
+
+\def\curso{Mestrado em Engenharia de Computadores e Telemática (\emph{\href{https://www.ua.pt/pt/curso/500}{MECT}})}
+
+\def\departamento{Departamento de Electrónica, Telecomunicações e Informática(\emph{\href{https://www.ua.pt/en/deti}{DETI}})}
+
+\def\empresa{Universidade de Aveiro(\emph{\href{https://www.ua.pt}{UA}})}
+
+%Images
+\def\logotipo{images/uaLogoNew.pdf}
+\def\techarch{images/tech_arch.png}
+\def\vehiclearch{images/av_arch.png}
+\def\rsuarch{images/rsu.png}
+
+% Tables of contents, of figures, ...
+
+\renewcommand{\contentsname}{Index}
+
+\begin{titlepage}
+
+\begin{center}
+%
+\vspace*{80mm}
+%
+{\Huge \textbf \space{\titulo}}\\
+%
+\vspace{50mm}
+%
+\begin{figure}[h]
+\center
+\includegraphics{\logotipo}
+\end{figure}
+%
+{\Huge \empresa}\\
+%
+\vspace{5mm}
+%
+{\LARGE \departamento}\\
+%
+\vspace{5mm}
+%
+{\curso}
+
+\end{center}
+%
+\begin{flushright}
+\end{flushright}
+\end{titlepage}
+
+%%  Página de Título %%
+%
+\newpage
+\pagenumbering{roman}
+\backgroundsetup{
+scale=1.1,
+color=white,
+opacity=0.9,
+angle=180,
+contents={\includegraphics{images/background.jpg}}
+}
+\BgThispage
+
+\author{%
+    \autores \\
+    \vspace{5mm}  
+}
+%
+\date{\data}
+
+\maketitle
+\newpage
+\backgroundsetup{
+scale=1.1,
+color=white,
+opacity=0.9,
+angle=90,
+contents={\includegraphics{images/background.jpg}}
+}
+\BgThispage
+
+\newpage
+\backgroundsetup{
+scale=1.1,
+color=white,
+opacity=0.9,
+angle=180,
+contents={\includegraphics{images/background.jpg}}
+}
+\BgThispage
+
+
+
+\newpage
+\backgroundsetup{
+scale=1.1,
+color=white,
+opacity=0.9,
+angle=90,
+contents={\includegraphics{images/background.jpg}}
+}
+\BgThispage
+
+\begin{Huge}
+    \begin{huge}
+    \begin{abstract}
+        This report details the design and implementation of efficient audio, image, and video encoders using C++. The project is divided into several stages, beginning with the development of a reusable \texttt{BitStream} class for low-level bit manipulation. This class serves as a foundation for implementing advanced compression techniques, including Golomb coding, predictive audio encoding, and intra- and inter-frame video coding. The focus is on optimizing performance and compression efficiency while ensuring correctness through comprehensive testing. Metrics such as compression ratio, processing time, and error measurements are used to evaluate the implementations against industry standards.
+    \end{abstract}
+    \end{huge}
+\end{Huge} 
+\addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
+
+\chapter{Introduction}
+Data compression is a crucial component in modern digital systems, enabling efficient storage and transmission of large volumes of information. This project explores the implementation of several compression techniques in the domains of text, audio, image, and video encoding. The key objectives are to develop reusable components for bit-level operations, apply these components to implement specific encoding schemes, and evaluate their performance using real-world datasets.
+
+The project is structured into four major parts:
+\begin{enumerate}
+    \item Implementation and testing of a \texttt{BitStream} class for precise bit manipulation.
+    \item Development of a Golomb coding class for data compression.
+    \item Audio encoding using predictive coding techniques.
+    \item Image and video encoding with both lossless and lossy approaches.
+\end{enumerate}
+
+Each part emphasizes performance optimization and accuracy. The final deliverables include an operational set of codecs, a detailed report, and a presentation showcasing the results.
+
+\chapter{Part 1 Problems: BitStream Class}
+
+\section{Overview}
+The \texttt{BitStream} class is the cornerstone of this project, providing a low-level interface for reading and writing bits to files. It is essential for the subsequent tasks, where efficient bitwise operations are critical for achieving high performance and compression ratios.
+
+\section{Task T1: Implementing the BitStream Class}
+The primary goal of this task is to create a robust and efficient C++ class capable of performing bit-level file operations. The \texttt{BitStream} class should:
+\begin{itemize}
+    \item Write single bits or groups of bits to a binary file.
+    \item Read single bits or groups of bits from a binary file.
+    \item Pack and unpack bits into bytes while preserving the correct order (most significant to least significant).
+    \item Handle errors gracefully, such as reading beyond the end of a file.
+\end{itemize}
+
+\subsection{Specifications}
+The class must implement the following core methods:
+\begin{itemize}
+    \item \texttt{writeBit}: Writes a single bit to the file.
+    \item \texttt{readBit}: Reads a single bit from the file.
+    \item \texttt{writeBits}: Writes an integer value represented by \textit{N} bits (\(0 < N < 64\)).
+    \item \texttt{readBits}: Reads an integer value represented by \textit{N} bits (\(0 < N < 64\)).
+    \item \texttt{writeString} and \texttt{readString}: Handle strings as sequences of bits.
+\end{itemize}
+
+\subsection{Challenges and Solutions}
+Implementing the \texttt{BitStream} class requires addressing the following challenges:
+\begin{itemize}
+    \item \textbf{Efficiency}: Ensuring minimal overhead in bit-packing and unpacking.
+    \item \textbf{Error Handling}: Managing edge cases, such as incomplete byte sequences and file I/O errors.
+    \item \textbf{Compatibility}: Designing the interface to integrate seamlessly with higher-level codecs.
+\end{itemize}
+
+The solutions to these challenges are discussed in detail in subsequent sections.
+
+\subsection{Test Cases for BitStream Class}
+
+To validate the functionality and robustness of the \texttt{BitStream} class, the following test cases were implemented:
+
+\subsubsection{Test Case 1: Writing and Reading Single Bits}
+\begin{itemize}
+    \item \textbf{Objective}: Ensure that individual bits are correctly written to and read from a binary file.
+    \item \textbf{Procedure}:
+    \begin{enumerate}
+        \item Use \texttt{writeBit} to write a sequence of alternating bits (e.g., 10101010).
+        \item Use \texttt{readBit} to read the bits back from the file.
+        \item Compare the written and read sequences for consistency.
+    \end{enumerate}
+    \item \textbf{Expected Result}: The sequence read from the file matches the sequence written.
+    \item \textbf{Result}: 
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=1.0\textwidth]{images/images/test_case_1.png}
+        \caption{Writing and Reading Single Bits}
+        \label{fig:test_case_1}
+    \end{figure}
+\end{itemize}
+
+\section{Test Case 2: Writing and Reading Multiple Bits}
+
+\subsubsection{Objective}
+Verify that groups of bits are accurately written and retrieved.
+
+\subsubsection{Procedure}
+\begin{enumerate}
+    \item Utilize \texttt{writeBits} to write integer values with varying bit lengths (e.g., 4 bits, 8 bits, 16 bits).
+    \item Use \texttt{readBits} to read the values back.
+    \item Validate that the read values match the original inputs.
+\end{enumerate}
+
+\subsubsection{Expected Result}
+All multi-bit values are correctly preserved during write and read operations.
+
+\subsubsection{Test Execution and Results}
+Below is the log output from executing Test Case 2:
+
+\begin{lstlisting}[style=logstyle, caption={Test Case 2 Execution Log}, label={lst:testcase2-log}]
+Writing bit: 1
+Writing bit: 1
+Writing bit: 1
+Writing bit: 1
+Writing bit: 0
+Writing bit: 1
+Writing bit: 0
+Flushing buffer: 11111010
+Writing bit: 1
+Writing bit: 0
+Writing bit: 1
+Writing bit: 0
+Writing bit: 0
+Writing bit: 0
+Writing bit: 0
+Writing bit: 1
+Flushing buffer: 10100001
+Writing bit: 0
+Writing bit: 0
+Writing bit: 1
+Writing bit: 0
+Writing bit: 0
+Writing bit: 0
+Writing bit: 1
+Writing bit: 1
+Flushing buffer: 00100011
+Writing bit: 0
+Writing bit: 1
+Writing bit: 0
+Writing bit: 0
+Flushing buffer: 01000000
+Filling buffer: 11111010
+Reading bit: 1
+Reading bit: 1
+Reading bit: 1
+Reading bit: 1
+Reading bit: 1
+Reading bit: 0
+Reading bit: 1
+Reading bit: 0
+Filling buffer: 10100001
+Reading bit: 1
+Reading bit: 0
+Reading bit: 1
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 1
+Filling buffer: 00100011
+Reading bit: 0
+Reading bit: 0
+Reading bit: 1
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 1
+Reading bit: 1
+Filling buffer: 01000000
+Reading bit: 0
+Reading bit: 1
+Reading bit: 0
+Reading bit: 0
+Test Case 2 Passed
+\end{lstlisting}
+
+As shown in Listing~\ref{lst:testcase2-log}, the bits are written and read correctly. Each group of bits with varying lengths (4, 8, and 16 bits) was successfully written to the file and accurately retrieved without any discrepancies. The test concluded with "Test Case 2 Passed," indicating that the encoding and decoding processes are functioning as expected.
+
+
+\subsubsection{Test Case 3: Error Handling when Reading Beyond EOF}
+\begin{itemize}
+    \item \textbf{Objective}: Confirm that the class gracefully handles attempts to read beyond the end of the file.
+    \item \textbf{Procedure}:
+    \begin{enumerate}
+        \item Write a known number of bits to a file using \texttt{writeBit} in the test we wrote 4 bits.
+        \item Attempt to read more bits than were written using \texttt{readBit} in the test we used 9 bits.
+        \item Observe the behavior and error handling mechanisms.
+    \end{enumerate}
+    \item \textbf{Expected Result}: An appropriate exception is thrown, indicating an attempt to read beyond the file's end.
+\end{itemize}
+
+\subsubsection{Test Execution and Results}
+Below is the log output from executing Test Case 3:
+
+\begin{lstlisting}[style=logstyle, caption={Test Case 3 Execution Log}, label={lst:testcase3-log}]
+Writing bit: 1
+Writing bit: 1
+Writing bit: 0
+Writing bit: 1
+Flushing buffer: 11010000
+Filling buffer: 11010000
+Reading bit: 1
+Reading bit: 1
+Reading bit: 1
+Reading bit: 1
+Reading bit: 0
+Reading bit: 0
+Reading bit: 1
+Reading bit: 1
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Reading bit: 0
+Test Case 3 Passed: Attempt to read beyond end of file
+\end{lstlisting}
+
+As shown in Listing~\ref{lst:testcase3-log}, the program successfully threw an exception when attempting to read beyond the end of the file. The test concluded with "Test Case 3 Passed," indicating that the error handling mechanisms are functioning correctly and preventing undefined behavior or crashes when over-reading.
+
+\section{Conclusion}
+
+In this section, the \texttt{BitStream} class was successfully implemented and rigorously tested to ensure its reliability and efficiency in handling bit-level operations. The class meets all specified requirements, including writing and reading single and multiple bits, managing bit packing and unpacking, and handling error conditions gracefully.
+
+The three test cases conducted demonstrated the class's robustness:
+\begin{itemize}
+    \item \textbf{Test Case 1} validated the basic functionality of writing and reading individual bits, confirming that the \texttt{BitStream} accurately preserves bit sequences.
+    \item \textbf{Test Case 2} extended this validation to handling multiple bits simultaneously, ensuring that varying bit lengths are correctly managed without data loss or corruption.
+    \item \textbf{Test Case 3} assessed the class's error handling capabilities, confirming that attempts to read beyond the end of a file are appropriately managed through exception handling.
+\end{itemize}
+
+The successful outcomes of these tests establish a solid foundation for the \texttt{BitStream} class, making it a reliable component for the subsequent stages of the project. Its efficiency and error-handling mechanisms are critical for achieving high performance and compression ratios in advanced encoding tasks such as Golomb coding, predictive audio encoding, and video frame compression.
+
+Overall, the \texttt{BitStream} class fulfills its role as the cornerstone of the project, providing the necessary low-level bit manipulation capabilities required for effective data compression and encoding.
+
+
+\printbibliography
+
+\end{document}
