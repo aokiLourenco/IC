@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <cstdint>
 #include <iostream>
+#include <bitset>
 
 #include "./Headers/BitStream.h"
 
@@ -27,6 +28,7 @@ BitStream::~BitStream() {
 }
 
 void BitStream::writeBit(bool bit) {
+    std::cout << "Writing bit: " << bit << std::endl;
     buffer = (buffer << 1) | bit;
     bufferPos++;
     if (bufferPos == 8) {
@@ -38,12 +40,13 @@ bool BitStream::readBit() {
     if (bufferPos == 0) {
         fillBuffer();
     }
-    if (bufferPos == 0) {
+    if (isEndOfStream()) {
         throw std::runtime_error("Attempt to read beyond end of file");
     }
     bool bit = (buffer & 0x80) != 0;
     buffer <<= 1;
     bufferPos--;
+    std::cout << "Reading bit: " << bit << std::endl;
     return bit;
 }
 
@@ -79,6 +82,7 @@ void BitStream::flushBuffer() {
     if (bufferPos > 0) {
         buffer <<= (8 - bufferPos);
         file.put(buffer);
+        std::cout << "Flushing buffer: " << std::bitset<8>(buffer) << std::endl;
         buffer = 0;
         bufferPos = 0;
     }
@@ -95,6 +99,7 @@ void BitStream::fillBuffer() {
         return;
     }
     bufferPos = 8;
+    std::cout << "Filling buffer: " << std::bitset<8>(buffer) << std::endl;
 }
 
 bool BitStream::isEndOfStream() {
@@ -113,4 +118,8 @@ std::fstream& BitStream::getFile() {
 
 int BitStream::getBufferPos() {
     return bufferPos;
+}
+
+void BitStream::close() {
+    file.close();
 }

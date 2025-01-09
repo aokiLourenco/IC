@@ -20,7 +20,7 @@ public:
     bool isEndOfStream();
     std::fstream& getFile();
     int getBufferPos();
-
+    void close();
 private:
     std::fstream file;
     bool writeMode;

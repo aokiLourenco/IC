@@ -53,7 +53,7 @@ void EncoderGolomb::encode(int Number) {
     int r = mappedNumber % M;
 
     // Debug print
-    std::cout << "Number: " << Number << ", Mapped Number: " << mappedNumber << ", Quotient: " << q << ", Remainder: " << r << std::endl;
+    // std::cout << "Number: " << Number << ", Mapped Number: " << mappedNumber << ", Quotient: " << q << ", Remainder: " << r << std::endl;
 
     // Encode the quotient using unary coding
     for (int i = 0; i < q; ++i) {
