@@ -6,13 +6,8 @@
 #include "./IntraEncoder.hpp"
 #include "./Headers/Golomb.hpp"
 
-IntraEncoder::IntraEncoder(EncoderGolomb &encoder, int shift) : golomb(encoder), shift(shift) 
-{
-}
-
-IntraEncoder::~IntraEncoder()
-{
-}
+IntraEncoder::IntraEncoder(EncoderGolomb &encoder, int shift) : golomb(encoder), shift(shift){}
+IntraEncoder::~IntraEncoder(){}
 
 int IntraEncoder::encode(Mat &frame, function<int(int, int, int)> predictor)
 {

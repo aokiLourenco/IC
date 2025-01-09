@@ -23,6 +23,9 @@ private:
 public:
     IntraDecoder(DecoderGolomb &decoder, int shift = 0);
     ~IntraDecoder();
-    int decode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
+    virtual int decode(Mat &frame, function<int(int, int, int)> reconstruct_image);
+    int decodeVideo(const string &output, int n_frames, int width, int height, function<int(int, int, int)> reconstruct_image);
+
+    DecoderGolomb& getGolomb() { return golomb; }
 };
 #endif

@@ -32,7 +32,7 @@ void savePPM(const Mat& image, const string& filename) {
 int main(int argc, char const *argv[]) {
     Converter conv;
     vector<function<int(int, int, int)>> predictors = GetPredictors();
-
+    
     cout << "Enter the name of the file to read (absolute path): ";
     string input;
     cin >> input;
@@ -67,36 +67,14 @@ int main(int argc, char const *argv[]) {
     }
 
     IntraDecoder intra_decoder(decoder, shift);
-    namedWindow("Decoded Frame", WINDOW_AUTOSIZE);
-
-    for (int frame_count = 0; frame_count < n_frames; frame_count++) {
-        Mat yuv_frame = Mat::zeros(height, width, CV_8UC1);
-        cout << "Decoding frame " << frame_count + 1 << "/" << n_frames << "\n";
-        
-        intra_decoder.decode(yuv_frame, predictors[predictor]);
-
-        if (!yuv_frame.empty() && yuv_frame.rows == height && yuv_frame.cols == width) {
-            Mat rgb_frame = conv.yuv420_to_rgb(yuv_frame);
-            if (!rgb_frame.empty()) {
-                imshow("Decoded Frame", rgb_frame);
-                
-                // Save last frame as PPM
-                if (frame_count == n_frames - 1) {
-                    string ppm_filename = input.substr(0, input.find_last_of('.')) + "_decoded.ppm";
-                    savePPM(rgb_frame, ppm_filename);
-                    cout << "Saved decoded frame to: " << ppm_filename << endl;
-                }
-                
-                char key = waitKey(10);
-                if (key == 27) break;
-                
-                if (frame_count == n_frames - 1) {
-                    this_thread::sleep_for(chrono::seconds(10));
-                }
-            }
-        }
+    
+    string output_video = input.substr(0, input.find_last_of('.')) + "_decoded.y4m";
+    
+    if (intra_decoder.decodeVideo(output_video, n_frames, width, height, predictors[predictor]) < 0) {
+        cerr << "Error decoding video" << endl;
+        return -1;
     }
-
-    destroyAllWindows();
+    
+    cout << "Video decoded successfully to: " << output_video << endl;
     return 0;
 }

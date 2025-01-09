@@ -1,13 +1,8 @@
 #include "BitStream.hpp"
 #include "IntraDecoder.hpp"
 
-IntraDecoder::IntraDecoder(DecoderGolomb &golomb, int shift) : golomb(golomb), shift(shift)
-{
-}
-
-IntraDecoder::~IntraDecoder()
-{
-}
+IntraDecoder::IntraDecoder(DecoderGolomb &golomb, int shift) : golomb(golomb), shift(shift){}
+IntraDecoder::~IntraDecoder(){}
 
 int IntraDecoder::decode(Mat &frame, function<int(int, int, int)> predictor)
 {
@@ -55,4 +50,37 @@ int IntraDecoder::decode(Mat &frame, function<int(int, int, int)> predictor)
     }
     frame = frame(Rect(1, 1, frame.cols - 1, frame.rows - 1));
     return frame_cost / (frame.rows * frame.cols * frame.channels());
+}
+
+int IntraDecoder::decodeVideo(const string &output, int n_frames, int width, int height, function<int(int, int, int)> reconstruct_image) {
+    ofstream outFile(output, ios::binary);
+    if (!outFile) {
+        cerr << "Failed to open output file" << endl;
+        return -1;
+    }
+
+    // Y4M header
+    outFile << "YUV4MPEG2 W" << width << " H" << height 
+            << " F30:1 Ip C420\n";
+
+    Mat frame;
+    const string frameHeader = "FRAME\n";
+    
+    for (int i = 0; i < n_frames; i++) {
+        frame = Mat::zeros(height, width, CV_8UC1);
+        
+        if (decode(frame, reconstruct_image) < 0) {
+            cerr << "Error decoding frame " << i << endl;
+            return -1;
+        }
+
+        // frame header
+        outFile << frameHeader;
+
+        // Y plane
+        outFile.write((char*)frame.data, width * height);
+    }
+
+    outFile.close();
+    return 0;
 }

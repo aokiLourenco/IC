@@ -16,13 +16,14 @@ using namespace cv;
 using namespace std;
 
 class IntraEncoder {
-private:
+protected:
     int shift;  
     EncoderGolomb &golomb; 
 
 public:
     IntraEncoder(EncoderGolomb &encoder, int shift = 0);
-    ~IntraEncoder();
-    int encode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
+    virtual ~IntraEncoder();
+    virtual int encode(Mat &old_frame, function<int(int, int, int)> reconstruct_image);
 };
+
 #endif // INTRAENCODER_H

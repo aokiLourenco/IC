@@ -1,33 +1,29 @@
 #ifndef INTERENCODER_H
 #define INTERENCODER_H
 
-#include <fstream>
-#include <opencv2/opencv.hpp>
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <cstdint>
-#include <iostream>
-#include "./BitStream.hpp"
-#include "./Golomb.hpp"
+#include "IntraEncoder.hpp"
+#include "InterFrame.hpp"
 
-using namespace cv;
-using namespace std;
-
-class InterEncoder {
+class InterEncoder : public IntraEncoder {
 private:
-    int block_size;        ///< Size of the blocks for decoding
-    int block_range;       ///< Range of the blocks for decoding
-    int shift;             ///< Shift for decoding
-    EncoderGolomb &golomb; ///< Golomb decoder for decoding
+    int block_size;
+    int search_range;
+    int i_frame_interval;
+    Mat reference_frame;
+    vector<MotionVector> motion_vectors;
 
 public:
-    InterEncoder(EncoderGolomb& encoder, int block_size, int block_range, int shift = 0);
-    int encode(Mat &old_frame, Mat &new_frame);
-    int get_Block_Size() const;
-    void set_Block_Size(int block_size);
-    int get_Block_Range() const;
-    float cost(Mat block);
+    InterEncoder(EncoderGolomb &encoder, int shift, int block_size,
+
+                 int search_range, int i_frame_interval);
+
+    ~InterEncoder();
+    int encode(Mat &frame, function<int(int,int,int)> predictor);
+    int encodeIntra(Mat &frame, function<int(int,int,int)> predictor);
+    int encodeInter(Mat &frame, function<int(int,int,int)> predictor);
+    void encodeIntraBlock(const Mat& block, Mat& residuals, function<int(int,int,int)> predictor);
+    void updateReference(const Mat &frame);
+    Mat findBestMatch(const Mat& block, const Mat& reference, Point2i& mv);
 };
 
-#endif // INTERENCODER_H
+#endif
