@@ -2,8 +2,8 @@
 #include <stdexcept>
 #include <cstdint>
 #include <iostream>
-#include "./BitStream.hpp"
-#include "./IntraEncoder.hpp"
+#include "./Headers/BitStream.hpp"
+#include "./Headers/IntraEncoder.hpp"
 #include "./Headers/Golomb.hpp"
 
 IntraEncoder::IntraEncoder(EncoderGolomb &encoder, int shift) : golomb(encoder), shift(shift) 

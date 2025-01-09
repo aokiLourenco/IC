@@ -71,7 +71,8 @@
         "map": "cpp",
         "set": "cpp",
         "cfenv": "cpp",
-        "__locale": "cpp"
+        "__locale": "cpp",
+        "locale": "cpp"
     },
     "cmake.ignoreCMakeListsMissing": true
 }
