@@ -2,28 +2,26 @@
 #define INTERENCODER_H
 
 #include "IntraEncoder.hpp"
-#include "InterFrame.hpp"
 
 class InterEncoder : public IntraEncoder {
 private:
-    int block_size;
-    int search_range;
-    int i_frame_interval;
-    Mat reference_frame;
-    vector<MotionVector> motion_vectors;
+    int blockSize;
+    int searchRange;
+    int iFrameInterval;
+    Mat previousFrame;
+    
+    Mat motionEstimation(const Mat& currentFrame, const Mat& referenceFrame);
+    Mat motionCompensation(const Mat& referenceFrame, const Mat& motionVectors);
+    bool shouldUseIntraMode(const Mat& block, const Mat& predictedBlock);
 
 public:
-    InterEncoder(EncoderGolomb &encoder, int shift, int block_size,
-
-                 int search_range, int i_frame_interval);
-
-    ~InterEncoder();
-    int encode(Mat &frame, function<int(int,int,int)> predictor);
-    int encodeIntra(Mat &frame, function<int(int,int,int)> predictor);
-    int encodeInter(Mat &frame, function<int(int,int,int)> predictor);
-    void encodeIntraBlock(const Mat& block, Mat& residuals, function<int(int,int,int)> predictor);
-    void updateReference(const Mat &frame);
-    Mat findBestMatch(const Mat& block, const Mat& reference, Point2i& mv);
+    InterEncoder(EncoderGolomb& encoder, int blockSize, int searchRange, 
+                int iFrameInterval, int shift = 0);
+    virtual ~InterEncoder() override;
+    
+    int encode(Mat& frame, function<int(int,int,int)> predictor) override;
+    int encodeVideo(const string& input, const string& output, 
+                   function<int(int,int,int)> predictor);
 };
 
 #endif
