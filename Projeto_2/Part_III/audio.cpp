@@ -16,7 +16,7 @@
  * @param output_file: path to the output file
  * @return audio_codec object
  */
-audio_codec::audio_codec(std::string file, std::string output_file, int M, int encode_mode) : encoder(output_file, EncodingMode::SIGN_MAGNITUDE), decoder(output_file, EncodingMode::SIGN_MAGNITUDE)
+audio_codec::audio_codec(std::string file, std::string output_file, int M, int target_bits, int encode_mode) : encoder(output_file, EncodingMode::SIGN_MAGNITUDE), decoder(output_file, EncodingMode::SIGN_MAGNITUDE)
 {
     // Open file and extract basic information
     filename = file;
@@ -39,6 +39,7 @@ audio_codec::audio_codec(std::string file, std::string output_file, int M, int e
         decoder.set_M(M);
     }
     mode = encode_mode;
+    target_bitrate = target_bits;
 }
 
 audio_codec::~audio_codec()
@@ -82,6 +83,14 @@ std::vector<int> audio_codec::inter_diference(std::vector<double> samplesL, std:
     return residual;
 }
 
+/*****************************************************************************/
+/*                                                                           */
+/*                                                                           */
+/*                         Lossless Encoding                                 */
+/*                                                                           */
+/*                                                                           */
+/*****************************************************************************/
+
 /**
  * Encode the audio file when it's mono
  * Calculate the residual values for the samples and store it in a file
@@ -111,6 +120,7 @@ void audio_codec::encode_mono_lossless()
         }
 
         encoder.encode(residual[i]);
+        residuals.push_back(residual[i]);
     }
 
     std::ofstream file;
@@ -186,7 +196,8 @@ void audio_codec::encode_stereo_with_inter_channel_lossless()
 /**
  * Main encode function, branch into lossless or lossy
  */
-void audio_codec::encode_lossless(){
+void audio_codec::encode_lossless()
+{
 
     // Subdivide into mono or stereo
     if (channelCount == 1)
@@ -201,29 +212,7 @@ void audio_codec::encode_lossless(){
     }
 }
 
-
-/**
- * Main encode function, branch into lossless or lossy
- */
-
-void audio_codec::encode()
-{
-
-    if(mode == 1){
-        encode_lossless();
-    }else{
-        encode_lossy();
-    }
-
-
-   
-}
-
-
-
-
-
-void audio_codec::decode()
+void audio_codec::decode_lossless()
 {
     // Decode the residual values from the file
     std::vector<int> residual_decoded;
@@ -311,6 +300,185 @@ void audio_codec::decode()
     std::cout << "Decoded audio file saved in /Data/output_decoded.wav" << std::endl;
 }
 
+/*****************************************************************************/
+/*                                                                           */
+/*                                                                           */
+/*                           Lossy Encoding                                  */
+/*                                                                           */
+/*                                                                           */
+/*****************************************************************************/
+
+/**
+ * Quantize a sample to reduce its precision based on the quantization step size.
+ * @param sample: the original sample value.
+ * @param step: the quantization step size.
+ * @return quantized value.
+ */
+int audio_codec::quantize_sample(double sample, int step)
+{
+    // Should be:
+    double halfStep = step / 2.0;
+    if (sample >= 0)
+    {
+        return static_cast<int>((sample + halfStep) / step);
+    }
+    else
+    {
+        return static_cast<int>((sample - halfStep) / step);
+    }
+}
+
+/**
+ * Dequantize a sample to approximate the original value.
+ * @param quantized_sample: the quantized sample value.
+ * @param step: the quantization step size.
+ * @return dequantized value.
+ */
+double audio_codec::dequantize_sample(int quantized_sample, int step)
+{
+    return static_cast<double>(quantized_sample * step);
+}
+
+/**
+ * Encode the audio file with lossy compression.
+ * Implements quantization to achieve bitrate control.
+ */
+void audio_codec::encode_lossy()
+{
+
+    int max_value = 32767;  // Max value for 16-bit PCM audio
+    int min_value = -32768; // Min value for 16-bit PCM audio
+
+    if (target_bitrate >= 16)
+    {
+        std::cerr << "Warning: Target bitrate too high, limiting to 15 bits" << std::endl;
+        target_bitrate = 15;
+    }
+
+    int quantization_levels = pow(2, target_bitrate);
+    int step_size = (max_value - min_value) / quantization_levels;
+
+    std::cout << "Quantization step size: " << step_size << std::endl;
+
+    std::vector<int> quantized_samples(sampleCount);
+    for (std::size_t i = 0; i < sampleCount; ++i)
+    {
+        quantized_samples[i] = quantize_sample(samples[i], step_size);
+    }
+
+    std::vector<int> temp;
+
+    for (int i = 0; i < quantized_samples.size(); i++)
+    {
+
+        if (i % 512 == 0)
+        {
+            int m = calculate_optimal_m(temp);
+            temp.clear();
+            encoder.set_M(m);
+            printf("M : %d\n", m);
+        }
+        printf("Quantized sample : %d\n", quantized_samples[i]);    
+        encoder.encode(quantized_samples[i]);
+        temp.push_back(quantized_samples[i]);
+    }
+
+    encoder.encode(13102003); // End of file
+
+    encoder.encode(channelCount);
+    encoder.encode(sampleRate);
+    encoder.encode(sampleCount);
+    encoder.finishEncoding();
+
+    std::cout << "Lossy encoding complete. Quantized samples stored in: " << output << std::endl;
+}
+
+/**
+ * Decode the lossy compressed audio file.
+ * Reconstructs the audio file using the quantized values and step size.
+ */
+void audio_codec::decode_lossy()
+{
+    int max_value = 32767;  // Max value for 16-bit PCM audio
+    int min_value = -32768; // Min value for 16-bit PCM audio
+    int quantization_levels = pow(2, target_bitrate);
+    int step_size = (max_value - min_value) / quantization_levels;
+
+    std::vector<int> quantized_samples;
+    std::vector<int> temp;
+    int cen = 0;
+    while (!decoder.getBitStream()->isEndOfStream())
+    {
+
+        if (cen % 512 == 0)
+        {
+            int m = calculate_optimal_m(temp);
+            temp.clear();
+            decoder.set_M(m);
+        }
+
+        int decoded_value = decoder.decode();
+
+        if (decoded_value == 13102003)
+        {
+            channelCount = decoder.decode();
+            sampleRate = decoder.decode();
+            sampleCount = decoder.decode();
+            break;
+        }
+        quantized_samples.push_back(decoded_value);
+        temp.push_back(decoded_value);
+        cen++;
+    }
+
+    // Reconstruct the original samples
+    std::vector<sf::Int16> reconstructed_samples(sampleCount);
+    for (std::size_t i = 0; i < sampleCount; ++i)
+    {
+        reconstructed_samples[i] = static_cast<sf::Int16>(dequantize_sample(quantized_samples[i], step_size));
+    }
+
+    // Create a new audio buffer with the reconstructed samples
+    sf::SoundBuffer buffer_decoded;
+    buffer_decoded.loadFromSamples(&reconstructed_samples[0], sampleCount, channelCount, sampleRate);
+
+    // Save the decoded samples to a new audio file
+    buffer_decoded.saveToFile("../Data/output_lossy_decoded.wav");
+    std::cout << "Lossy decoded audio file saved in /Data/output_lossy_decoded.wav" << std::endl;
+}
+
+/**
+ * Main encode function, branch into lossless or lossy
+ */
+
+void audio_codec::encode()
+{
+
+    if (mode == 1)
+    {
+        encode_lossless();
+    }
+    else
+    {
+        encode_lossy();
+    }
+}
+
+/**
+ * Main decode function, branch into lossless or lossy
+ */
+void audio_codec::decode()
+{
+    if (mode == 1)
+    {
+        decode_lossless();
+    }
+    else
+    {
+        decode_lossy();
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -341,16 +509,27 @@ int main(int argc, char *argv[])
         int M = 0;
         std::cout << "M (0 for dynamic): ";
         std::cin >> M;
-        if (M !=0)
+        if (M != 0)
         {
             int M = pow(2, ceil(log2(M)));
         }
-        audio = std::make_unique<audio_codec>(input_file, output_file, M, 1);
+        audio = std::make_unique<audio_codec>(input_file, output_file, M, 0, 1);
     }
     // Lossy
     else
     {
-        audio = std::make_unique<audio_codec>(input_file, output_file, 0, 2);
+        int target_bitrate;
+        while (1)
+        {
+            std::cout << "Enter target bitrate (bits per sample): ";
+            std::cin >> target_bitrate;
+            if (target_bitrate > 0)
+            {
+                break;
+            }
+            std::cout << "Invalid bitrate. Please enter a positive integer." << std::endl;
+        }
+        audio = std::make_unique<audio_codec>(input_file, output_file, 0, target_bitrate, 2);
     }
 
     printf("Encoding\n");

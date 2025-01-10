@@ -19,6 +19,8 @@ private:
     // Dinamic M
     bool dynamic_M = false;
 
+    // Target bitrate for the lossy mode in bits per sample
+    int target_bitrate;
 
     // Basic information about the audio file
     const sf::Int16 *samples;
@@ -53,7 +55,7 @@ private:
 public:
     EncoderGolomb encoder;
     DecoderGolomb decoder;
-    audio_codec(std::string file, std::string output_file, int M,int encode_mode);
+    audio_codec(std::string file, std::string output_file, int M, int target_bits,int encode_mode);
     ~audio_codec();
 
 
@@ -70,12 +72,14 @@ public:
     void encode_lossless(); // Main lossless encode function, branch into mono or stereo
     void encode_mono_lossless(); // Encode mono audio lossless
     void encode_stereo_with_inter_channel_lossless(); // Encode stereo audio lossless
+    void decode_lossless(); // Decode lossless audio
     
     void encode_lossy(); // Main lossy encode function, branch into mono or stereo
-    void encode_mono_lossy(); // Encode mono audio lossy
-    void encode_stereo_with_inter_channel_lossy(); // Encode stereo audio lossy
+    int quantize_sample(double sample, int step); // Quantize a sample
+    double dequantize_sample(int quantized_sample, int step); // Dequantize a sample
+    void decode_lossy(); // Decode lossy audio
 
+    void decode(); // Main decode function, branch into lossless or lossy
     
     
-    void decode();
 };
