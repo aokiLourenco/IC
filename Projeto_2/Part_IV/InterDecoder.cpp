@@ -1,8 +1,9 @@
 #include "Headers/InterDecoder.hpp"
+#include "Headers/Golomb.hpp"
 
 InterDecoder::InterDecoder(DecoderGolomb& decoder, int blockSize, 
                          int iFrameInterval, int shift)
-    : IntraDecoder(decoder, shift),
+    : IntraDecoder(decoder, shift), golomb(decoder),
       blockSize(blockSize),
       iFrameInterval(iFrameInterval) {}
 
@@ -12,7 +13,7 @@ int InterDecoder::decode(Mat& frame, function<int(int,int,int)> predictor) {
     static int frameCount = 0;
     
     // Check frame type
-    int frameType = getGolomb().decode();
+    int frameType = golomb.decode();
     
     // I-frame
     if(frameType == 1) {
@@ -32,8 +33,8 @@ int InterDecoder::decode(Mat& frame, function<int(int,int,int)> predictor) {
     // Decode motion vectors
     for(int i = 0; i < motionVectors.rows; i++) {
         for(int j = 0; j < motionVectors.cols; j++) {
-            int mvx = getGolomb().decode();
-            int mvy = getGolomb().decode();
+            int mvx = golomb.decode();
+            int mvy = golomb.decode();
             motionVectors.at<Vec2i>(i, j) = Vec2i(mvx, mvy);
         }
     }

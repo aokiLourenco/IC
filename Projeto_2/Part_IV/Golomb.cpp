@@ -43,8 +43,9 @@ int EncoderGolomb::optimal_m(cv::Mat &frame) {
 
 void EncoderGolomb::encode(int Number) {
     // Add M validation
-    if (M <= 0 || (M & 1) == 0) {
-        throw std::runtime_error("Invalid M value: M must be positive and odd");
+    
+    if (M <= 0) {
+        throw std::runtime_error("M must be positive");
     }
 
     // Map number according to encoding mode

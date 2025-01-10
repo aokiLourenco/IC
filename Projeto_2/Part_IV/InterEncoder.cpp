@@ -1,15 +1,17 @@
 #include "Headers/InterEncoder.hpp"
+#include "Headers/Golomb.hpp"
+#include <iostream> // Add this line for debugging
 
 InterEncoder::InterEncoder(EncoderGolomb& encoder, int blockSize, int searchRange, 
                          int iFrameInterval, int shift)
-    : IntraEncoder(encoder, shift), 
+    : IntraEncoder(encoder, shift),
       blockSize(blockSize), 
       searchRange(searchRange),
-      iFrameInterval(iFrameInterval) {
+      iFrameInterval(iFrameInterval), golomb(encoder) {
     previousFrame = Mat();
 }
 
-InterEncoder::~InterEncoder() = default;
+InterEncoder::~InterEncoder() {};
 
 Mat InterEncoder::motionEstimation(const Mat& currentFrame, const Mat& referenceFrame) {
     Mat motionVectors = Mat::zeros(
@@ -81,10 +83,12 @@ int InterEncoder::encode(Mat& frame, function<int(int,int,int)> predictor) {
     static int frameCount = 0;
     static Mat previousFrame;
     
+
     // For I-frames, use intra-frame coding
     if(frameCount % iFrameInterval == 0) {
         golomb.encode(1); // Flag for I-frame
         frameCount++;
+        previousFrame = frame.clone(); // Initialize previousFrame
         return IntraEncoder::encode(frame, predictor);
     }
     
@@ -94,6 +98,8 @@ int InterEncoder::encode(Mat& frame, function<int(int,int,int)> predictor) {
     Mat motionVectors = motionEstimation(frame, previousFrame);
     Mat predicted = motionCompensation(previousFrame, motionVectors);
     
+    // Debug statements to check sizes
+
     // Encode motion vectors
     for(int i = 0; i < motionVectors.rows; i++) {
         for(int j = 0; j < motionVectors.cols; j++) {
@@ -106,7 +112,7 @@ int InterEncoder::encode(Mat& frame, function<int(int,int,int)> predictor) {
     // Encode residual
     Mat residual;
     absdiff(frame, predicted, residual);
-    
+
     int totalCost = IntraEncoder::encode(residual, predictor);
     
     frame.copyTo(previousFrame);
@@ -128,11 +134,11 @@ int InterEncoder::encodeVideo(const string& input, const string& output,
     int totalFrames = cap.get(CAP_PROP_FRAME_COUNT);
 
     // Write header
-    golomb.encode(width);
-    golomb.encode(height);
-    golomb.encode(totalFrames);
-    golomb.encode(blockSize);
-    golomb.encode(iFrameInterval);
+   golomb.encode(width);
+   golomb.encode(height);
+   golomb.encode(totalFrames);
+   golomb.encode(blockSize);
+   golomb.encode(iFrameInterval);
 
     Mat frame;
     int frameCount = 0;

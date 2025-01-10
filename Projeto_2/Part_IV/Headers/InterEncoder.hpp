@@ -14,6 +14,8 @@ private:
     Mat motionCompensation(const Mat& referenceFrame, const Mat& motionVectors);
     bool shouldUseIntraMode(const Mat& block, const Mat& predictedBlock);
 
+    EncoderGolomb& golomb;
+
 public:
     InterEncoder(EncoderGolomb& encoder, int blockSize, int searchRange, 
                 int iFrameInterval, int shift = 0);

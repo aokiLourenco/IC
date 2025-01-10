@@ -11,6 +11,8 @@ private:
     
     Mat motionCompensation(const Mat& referenceFrame, const Mat& motionVectors);
 
+    DecoderGolomb& golomb;
+
 public:
     InterDecoder(DecoderGolomb& decoder, int blockSize, 
                 int iFrameInterval, int shift = 0);

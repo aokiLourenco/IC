@@ -32,11 +32,11 @@ int main(int argc, char const *argv[]) {
     cin >> iFrameInterval;
 
     try {
-        // Initialize encoder with valid M value
         EncoderGolomb encoder(output, EncodingMode::SIGN_MAGNITUDE);
-        encoder.set_M(3); // Use odd number > 1
+        encoder.set_M(3);
         
-        InterEncoder inter_encoder(encoder, blockSize, searchRange, iFrameInterval);
+        int shift = 0;
+        InterEncoder inter_encoder(encoder, blockSize, searchRange, iFrameInterval, shift);
 
         // Open input video and verify format
         VideoCapture cap(input);
