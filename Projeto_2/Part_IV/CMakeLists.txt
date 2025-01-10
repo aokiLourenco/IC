@@ -47,9 +47,21 @@ add_executable(inter_Encoder_tester
     Converter.cpp
 )
 
+add_executable(Lossy_tester
+    LossyVideoCodec.cpp
+
+    IntraEncoder.cpp
+    IntraDecoder.cpp
+    BitStream.cpp 
+    Predictor.cpp 
+    Golomb.cpp 
+    Converter.cpp
+)
+
 # Link OpenCV and SFML libraries
 target_link_libraries(predictor ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 target_link_libraries(intra_Decoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 target_link_libraries(intra_Encoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 target_link_libraries(inter_Decoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 target_link_libraries(inter_Encoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+target_link_libraries(Lossy_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)

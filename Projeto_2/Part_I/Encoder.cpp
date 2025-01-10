@@ -48,11 +48,11 @@ void Encoder::encode() {
 
 int main() {
 
-    std::cout << "Enter the name of the file to save to (txt)(absolute path): ";
+    std::cout << "Enter the name of the file to save to (bin)(absolute path): ";
     std::string output;
     std::cin >> output;
 
-    std::cout << "Enter the name of the file to read from (bin)(absolute path): ";
+    std::cout << "Enter the name of the file to read from (txt)(absolute path): ";
     std::string input;
     std::cin >> input;
 
