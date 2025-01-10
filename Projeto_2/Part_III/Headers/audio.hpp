@@ -24,14 +24,10 @@ private:
 
     // Basic information about the audio file
     const sf::Int16 *samples;
-    double first_sample;
     std::size_t sampleCount;
     unsigned int sampleRate;
     unsigned int channelCount;
     float duration;
-
-    // // Dinamic change of M value
-    int block_size = 512; // Block size that will be used to calculate the optimal M value
 
     int calculate_optimal_m(const std::vector<int> &residuals)
     {

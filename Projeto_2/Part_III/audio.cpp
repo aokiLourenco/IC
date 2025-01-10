@@ -2,6 +2,7 @@
 #include <iostream>
 #include <SFML/Audio.hpp>
 #include <memory>
+#include <chrono>
 
 // Include snd
 #include <sndfile.hh>
@@ -108,7 +109,7 @@ void audio_codec::encode_mono_lossless()
 
     std::vector<int> residuals;
 
-    std::cout << "Total encoded residuals: " << residual.size() << std::endl;
+    // std::cout << "Total encoded residuals: " << residual.size() << std::endl;
     for (int i = 0; i < residual.size(); i++)
     {
 
@@ -160,7 +161,6 @@ void audio_codec::encode_stereo_with_inter_channel_lossless()
 
     std::vector<int> residuals;
 
-    std::cout << "Total encoded residuals: " << residual1.size() * 2 << std::endl; // Two residuals per sample (inter-channel and intra-channel).
     for (int i = 0; i < residual1.size(); i++)
     {
 
@@ -178,14 +178,8 @@ void audio_codec::encode_stereo_with_inter_channel_lossless()
         residuals.push_back(residual2[i]);
     }
 
-    // std::ofstream file;
-    // file.open("../Data/samples", std::ios::app);
-    // for (int i = 0; i < sampleCount; i++)
-    // {
-    //     file << samples[i] << std::endl;
-    // }
-    // file.close();
     encoder.encode(13102003); // End of file
+
     // Encode the things refering to the audio
     encoder.encode(channelCount);
     encoder.encode(sampleRate);
@@ -218,10 +212,6 @@ void audio_codec::decode_lossless()
     std::vector<int> residual_decoded;
     std::vector<int> residuals;
 
-    // std::vector<int> residuals1;
-    // std::vector<int> residuals2;
-    // std::ofstream file;
-    // file.open("../Data/samples_decoded", std::ios::app);
     int cen = 0;
     while (!decoder.getBitStream()->isEndOfStream())
     {
@@ -246,13 +236,8 @@ void audio_codec::decode_lossless()
         cen++;
     }
 
-    // file.close();
-
-    std::cout << "Total decoded residuals: " << residual_decoded.size() << std::endl;
-
     // Calculate the original samples using the residual values
     std::vector<double> samples_decoded(sampleCount);
-    printf("Residual decoder 0 : %d\n", residual_decoded[0]);
     samples_decoded[0] = residual_decoded[0];
 
     if (channelCount == 1)
@@ -287,12 +272,6 @@ void audio_codec::decode_lossless()
         samples_decoded_int16[i] = static_cast<sf::Int16>(samples_decoded[i]);
     }
 
-    // for (int i = 0; i < samples_decoded_int16.size(); i++)
-    // {
-    //     file << samples_decoded_int16[i] << std::endl;
-    // }
-    // file.close();
-
     buffer_decoded.loadFromSamples(&samples_decoded_int16[0], sampleCount, channelCount, sampleRate);
 
     // Save the decoded samples to a new audio file
@@ -316,7 +295,6 @@ void audio_codec::decode_lossless()
  */
 int audio_codec::quantize_sample(double sample, int step)
 {
-    // Should be:
     double halfStep = step / 2.0;
     if (sample >= 0)
     {
@@ -358,8 +336,6 @@ void audio_codec::encode_lossy()
     int quantization_levels = pow(2, target_bitrate);
     int step_size = (max_value - min_value) / quantization_levels;
 
-    std::cout << "Quantization step size: " << step_size << std::endl;
-
     std::vector<int> quantized_samples(sampleCount);
     for (std::size_t i = 0; i < sampleCount; ++i)
     {
@@ -376,9 +352,7 @@ void audio_codec::encode_lossy()
             int m = calculate_optimal_m(temp);
             temp.clear();
             encoder.set_M(m);
-            printf("M : %d\n", m);
         }
-        printf("Quantized sample : %d\n", quantized_samples[i]);    
         encoder.encode(quantized_samples[i]);
         temp.push_back(quantized_samples[i]);
     }
@@ -389,8 +363,6 @@ void audio_codec::encode_lossy()
     encoder.encode(sampleRate);
     encoder.encode(sampleCount);
     encoder.finishEncoding();
-
-    std::cout << "Lossy encoding complete. Quantized samples stored in: " << output << std::endl;
 }
 
 /**
@@ -433,10 +405,17 @@ void audio_codec::decode_lossy()
 
     // Reconstruct the original samples
     std::vector<sf::Int16> reconstructed_samples(sampleCount);
+    // double mse = 0.0;
     for (std::size_t i = 0; i < sampleCount; ++i)
     {
         reconstructed_samples[i] = static_cast<sf::Int16>(dequantize_sample(quantized_samples[i], step_size));
+        // double error = static_cast<double>(samples[i]) - reconstructed_samples[i];
+        // mse += error * error;
     }
+
+    // mse /= sampleCount;
+
+    // std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
 
     // Create a new audio buffer with the reconstructed samples
     sf::SoundBuffer buffer_decoded;
@@ -532,10 +511,22 @@ int main(int argc, char *argv[])
         audio = std::make_unique<audio_codec>(input_file, output_file, 0, target_bitrate, 2);
     }
 
+    /* Decoment to measure time */
+
     printf("Encoding\n");
+    // auto start_encode = std::chrono::high_resolution_clock::now();
     audio->encode();
+    // auto end_encode = std::chrono::high_resolution_clock::now();
+
+    // std::chrono::duration<double> encode_time = end_encode - start_encode;
+    // std::cout << "Encoding time: " << encode_time.count() << " seconds" << std::endl;
+
     printf("Decoding\n");
+    // auto start_decode = std::chrono::high_resolution_clock::now();
     audio->decode();
+    // auto end_decode = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> decode_time = end_decode - start_decode;
+    // std::cout << "Decoding time: " << decode_time.count() << " seconds" << std::endl;
 
     return 0;
 }
