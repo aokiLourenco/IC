@@ -10,6 +10,7 @@
 #include "headers/Converter.hpp"
 #include "headers/IntraDecoder.hpp"
 #include "headers/IntraEncoder.hpp"
+#include "headers/DCTUtils.hpp"
 
 using namespace std;
 using namespace cv;
@@ -51,7 +52,7 @@ Mat inverseQuantizeResiduals(const Mat& quantizedResiduals, int quantLevel) {
 
 int main(int argc, char* argv[]) {
     if (argc < 5) {
-        cout << "Usage: ./LossyVideoCodec <input_video> <output_encoded> <quant_level> <predictor_id>" << endl;
+        cout << "Usage: ./lossy_encoder <input_video> <output_encoded> <quant_level> <predictor_id>" << endl;
         return -1;
     }
 
@@ -115,14 +116,17 @@ int main(int argc, char* argv[]) {
     Mat previousFrame = grayFrame.clone();
 
     // Encode the first frame (no prediction)
-    Mat residuals = calculateResiduals(grayFrame, Mat::zeros(grayFrame.size(), grayFrame.type()));
-    Mat quantizedResiduals = quantizeResiduals(residuals, quantLevel);
+    for (int y = 0; y < grayFrame.rows; y += BLOCK_SIZE) {
+        for (int x = 0; x < grayFrame.cols; x += BLOCK_SIZE) {
+            Mat block = grayFrame(Rect(x, y, BLOCK_SIZE, BLOCK_SIZE));
+            Mat dctBlock = performDCT(block);
+            Mat quantizedBlock = quantizeDCT(dctBlock, quantLevel);
+            vector<int> zigzag = zigzagOrder(quantizedBlock);
 
-    // Flatten and encode residuals
-    for (int y = 0; y < quantizedResiduals.rows; ++y) {
-        for (int x = 0; x < quantizedResiduals.cols; ++x) {
-            int residual = quantizedResiduals.at<int>(y, x);
-            encoder.encode(residual);
+            // Encode zigzag ordered coefficients
+            for (int coeff : zigzag) {
+                encoder.encode(coeff);
+            }
         }
     }
 
@@ -144,14 +148,18 @@ int main(int argc, char* argv[]) {
         }
 
         // Calculate residuals and quantize
-        residuals = calculateResiduals(grayFrame, predictedFrame);
-        quantizedResiduals = quantizeResiduals(residuals, quantLevel);
+        Mat residuals = calculateResiduals(grayFrame, predictedFrame);
+        for (int y = 0; y < residuals.rows; y += BLOCK_SIZE) {
+            for (int x = 0; x < residuals.cols; x += BLOCK_SIZE) {
+                Mat block = residuals(Rect(x, y, BLOCK_SIZE, BLOCK_SIZE));
+                Mat dctBlock = performDCT(block);
+                Mat quantizedBlock = quantizeDCT(dctBlock, quantLevel);
+                vector<int> zigzag = zigzagOrder(quantizedBlock);
 
-        // Flatten and encode residuals
-        for (int y = 0; y < quantizedResiduals.rows; ++y) {
-            for (int x = 0; x < quantizedResiduals.cols; ++x) {
-                int residual = quantizedResiduals.at<int>(y, x);
-                encoder.encode(residual);
+                // Encode zigzag ordered coefficients
+                for (int coeff : zigzag) {
+                    encoder.encode(coeff);
+                }
             }
         }
 

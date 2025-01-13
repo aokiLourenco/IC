@@ -64,9 +64,22 @@ set(CODEC_SOURCES
 #     Converter.cpp
 # )
 
-add_executable(Lossy_tester
-    src/LossyVideoCodec.cpp
+add_executable(lossy_encoder
+    src/LossyVideoEncoder.cpp
 
+    src/codecs/DCTUtils.cpp
+    src/codecs/IntraEncoder.cpp
+    src/codecs/IntraDecoder.cpp
+    src/codecs/BitStream.cpp 
+    src/codecs/Predictor.cpp 
+    src/codecs/Golomb.cpp 
+    src/codecs/Converter.cpp
+)
+
+add_executable(lossy_decoder_DCT
+    src/LossyVideoDecoderDCT.cpp
+
+    src/codecs/DCTUtils.cpp
     src/codecs/IntraEncoder.cpp
     src/codecs/IntraDecoder.cpp
     src/codecs/BitStream.cpp 
@@ -87,5 +100,6 @@ add_executable(video_codec
 # target_link_libraries(intra_Encoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 # target_link_libraries(inter_Decoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 # target_link_libraries(inter_Encoder_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
-target_link_libraries(Lossy_tester ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+target_link_libraries(lossy_encoder ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+target_link_libraries(lossy_decoder_DCT ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
 target_link_libraries(video_codec ${OpenCV_LIBS} sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
